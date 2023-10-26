@@ -126,55 +126,55 @@ GO
 -- CREACION DE TABLAS INMUEBLE
 
 CREATE TABLE [SQLITO].[tipo_inmueble](
-	[tipo_inmueble_id] NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[tipo_inmueble_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[nombre] NVARCHAR(100) 
 )
 
 CREATE TABLE [SQLITO].[tipo_ambiente](
-	[tipo_ambiente_id] NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[tipo_ambiente_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[nombre] NVARCHAR(100) 
 )
 
 CREATE TABLE [SQLITO].[disposicion](
-	[disposicion_id] NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[disposicion_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[nombre] NVARCHAR(100) 
 )
 
 CREATE TABLE [SQLITO].[orientacion](
-	[orientacion_id] NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[orientacion_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[nombre] NVARCHAR(100) 
 )
 
 CREATE TABLE [SQLITO].[estado_inmueble](
-	[estado_inmueble_id] NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[estado_inmueble_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[nombre] NVARCHAR(100) 
 )
 
 CREATE TABLE [SQLITO].[provincia](
-	[provincia_id] NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[provincia_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[nombre] VARCHAR(100) 
 )
 
 CREATE TABLE [SQLITO].[localidad](
-	[localidad_id] NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[localidad_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[provincia] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[provincia] ([provincia_id]),
 	[nombre] VARCHAR(100) 
 )
 
 CREATE TABLE [SQLITO].[barrio](
-	[barrio_id] NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[barrio_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[localidad] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[localidad] ([localidad_id]),
 	[nombre] VARCHAR(100) 
 )
 
 CREATE TABLE [SQLITO].[direccion](
-	[direccion_id] NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[direccion_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[barrio] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[barrio] ([barrio_id]),
 	[descripcion] VARCHAR(100) 
 )
 
 CREATE TABLE [SQLITO].[caracteristica](
-	[caracteristica_id] NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[caracteristica_id] NUMERIC(18,0) IDENTITY NOT NULL PRIMARY KEY,
 	[nombre] VARCHAR(100) 
 )
 
@@ -198,7 +198,7 @@ CREATE TABLE [SQLITO].[caracteristica_X_inmueble](
 )
 
 CREATE TABLE [SQLITO].[propietario](
-	[propietario_id] NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[propietario_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[nombre] VARCHAR(100),
 	[apellido] VARCHAR(100),
 	[dni] VARCHAR(100),
@@ -216,31 +216,31 @@ CREATE TABLE [SQLITO].[propietario_X_inmueble](
 -- CREACION TABLAS ANUNCIO
 
 CREATE TABLE [SQLITO].[estado_anuncio](
-	[estado_anuncio_id] NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[estado_anuncio_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[nombre] NVARCHAR(100)
 )
 
 CREATE TABLE [SQLITO].[tipo_periodo](
-	[tipo_periodo_id] NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[tipo_periodo_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[nombre] NVARCHAR(100)
 )
 CREATE TABLE [SQLITO].[tipo_operacion](
-	[tipo_operacion_id] NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[tipo_operacion_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[nombre] NVARCHAR(100)
 )
 CREATE TABLE [SQLITO].[moneda](
-	[moneda_id] NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[moneda_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[tipo_moneda] VARCHAR(100)
 )
 
 CREATE TABLE [SQLITO].[agencia](
-	[agencia_id] NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[agencia_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[nombre] VARCHAR(100),
 	[direccion] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[direccion] ([direccion_id])
 )
 
 CREATE TABLE [SQLITO].[agente_inmobiliario](
-	[agente_inmobiliario_id] NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[agente_inmobiliario_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[agencia] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[agencia] ([agencia_id]),
 	[nombre] VARCHAR(100),
 	[apellido] VARCHAR(100),
@@ -275,12 +275,12 @@ CREATE TABLE [SQLITO].[venta](
 )
 
 CREATE TABLE [SQLITO].[medio_pago](
-	[medio_pago_id]  NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[medio_pago_id]  NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[nombre] VARCHAR(100)
 )
 
 CREATE TABLE [SQLITO].[pago_compra_inmueble](
-	[pago_compra_inmueble]  NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[pago_compra_inmueble]  NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[moneda] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[moneda] ([moneda_id]),
 	[medio_pago]  NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[medio_pago] ([medio_pago_id]),
 	[venta]  NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[venta] ([codigo_venta]),
@@ -290,7 +290,7 @@ CREATE TABLE [SQLITO].[pago_compra_inmueble](
 -- CREACION TABLAS ALQUILER
 
 CREATE TABLE [SQLITO].[inquilino](
-	[inquilino_id] NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[inquilino_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[nombre] VARCHAR(100),
 	[apellido] VARCHAR(100),
 	[dni] VARCHAR(100),
@@ -301,12 +301,12 @@ CREATE TABLE [SQLITO].[inquilino](
 )
 
 CREATE TABLE [SQLITO].[estado_alquiler](
-	[estado_alquiler_id] NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[estado_alquiler_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[nombre] NVARCHAR(100)
 )
 
 CREATE TABLE [SQLITO].[detalle_importe_alquiler](
-	[detalle_importe_alquiler_id] NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[detalle_importe_alquiler_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[numero_periodo_inicio] NUMERIC(18,0),
 	[numero_periodo_fin] NUMERIC(18,0),
 	[precio] NUMERIC(18,2)
@@ -326,7 +326,7 @@ CREATE TABLE [SQLITO].[alquiler](
 )
 
 CREATE TABLE [SQLITO].[pago_alquiler](
-	[codigo_pago]  NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[codigo_pago]  NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[alquiler] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[alquiler] ([codigo_alquiler]),
 	[medio_pago] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[medio_pago] ([medio_pago_id]),
 	[fecha_pago] DATETIME,
@@ -338,3 +338,189 @@ CREATE TABLE [SQLITO].[pago_alquiler](
 )
 
 GO
+
+CREATE PROCEDURE [SQLITO].[MIGRACION] AS
+BEGIN
+
+INSERT INTO [SQLITO].[propietario](apellido, dni, fecha_nacimiento, fecha_registro, mail, nombre, telefono)
+SELECT DISTINCT
+	PROPIETARIO_APELLIDO,
+	PROPIETARIO_DNI,
+	PROPIETARIO_FECHA_NAC,
+	PROPIETARIO_FECHA_REGISTRO,
+	PROPIETARIO_MAIL,
+	PROPIETARIO_NOMBRE, 
+	PROPIETARIO_TELEFONO
+FROM gd_esquema.Maestra
+
+
+END
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
