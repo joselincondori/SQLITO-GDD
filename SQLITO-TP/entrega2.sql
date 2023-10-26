@@ -1,7 +1,10 @@
---CREATE SCHEMA SQLITO
+IF EXISTS (SELECT * FROM sys.schemas WHERE name = 'SQLITO')
+DROP SCHEMA [SQLITO]
+GO
+
+CREATE SCHEMA SQLITO
 GO
 -- DROP DE TABLAS
--- Eliminar tablas en orden inverso a su creación
 
 IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[SQLITO].[pago_alquiler]') AND type in (N'U'))
 DROP TABLE [SQLITO].[pago_alquiler]
@@ -339,8 +342,12 @@ CREATE TABLE [SQLITO].[pago_alquiler](
 
 GO
 
---CREATE PROCEDURE [SQLITO].[MIGRACION] AS
---BEGIN
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND object_id = OBJECT_ID(N'[SQLITO].[MIGRACION]'))
+DROP PROCEDURE [SQLITO].[MIGRACION]
+GO
+
+CREATE PROCEDURE [SQLITO].[MIGRACION] AS
+BEGIN
 
 INSERT INTO [SQLITO].[propietario](apellido, dni, fecha_nacimiento, fecha_registro, mail, nombre, telefono)
 SELECT DISTINCT
