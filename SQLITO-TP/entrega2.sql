@@ -240,8 +240,8 @@ CREATE TABLE [SQLITO].[agencia](
 )
 
 CREATE TABLE [SQLITO].[agente_inmobiliario](
-	[agente_inmobiliario_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
-	[agencia] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[agencia] ([agencia_id]),
+	[agente_inmobiliario_id] NUMERIC(18,0) IDENTITY(1,1) NOT NULL PRIMARY KEY,
+	[agencia] NUMERIC(18,0) FOREIGN KEY REFERENCES [SQLITO].[agencia] ([agencia_id]), -- TODO NOT NULL
 	[nombre] VARCHAR(100),
 	[apellido] VARCHAR(100),
 	[dni] VARCHAR(100),
@@ -249,8 +249,8 @@ CREATE TABLE [SQLITO].[agente_inmobiliario](
 	[fecha_nacimiento] DATETIME,
 	[mail] VARCHAR(100),
 	[telefono] NUMERIC(18,0)
-
 )
+
 
 CREATE TABLE [SQLITO].[anuncio](
 	[codigo_anuncio] NUMERIC(18,0) NOT NULL PRIMARY KEY,
@@ -522,5 +522,21 @@ END
 
 
 
+=======
+
+--CREATE PROCEDURE sp_ImportarAgentes
+--AS
+--BEGIN
+
+
+--END;
+
+INSERT INTO [SQLITO].[agente_inmobiliario]
+    (Nombre, Apellido, dni, fecha_Registro, telefono, mail, fecha_nacimiento)
+	SELECT DISTINCT AGENTE_NOMBRE, AGENTE_APELLIDO, AGENTE_DNI, AGENTE_FECHA_REGISTRO, AGENTE_TELEFONO, AGENTE_MAIL, AGENTE_FECHA_NAC
+    FROM [gd_esquema].[maestra]
+    --WHERE [alguna_condición_si_la_necesitas];
+    
+>>>>>>> 4800ead2c51d9903f108a108f3649cebe07c6281
 
 
