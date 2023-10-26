@@ -1,4 +1,4 @@
-CREATE SCHEMA SQLITO
+--CREATE SCHEMA SQLITO
 GO
 -- DROP DE TABLAS
 -- Eliminar tablas en orden inverso a su creación
@@ -339,8 +339,8 @@ CREATE TABLE [SQLITO].[pago_alquiler](
 
 GO
 
-CREATE PROCEDURE [SQLITO].[MIGRACION] AS
-BEGIN
+--CREATE PROCEDURE [SQLITO].[MIGRACION] AS
+--BEGIN
 
 INSERT INTO [SQLITO].[propietario](apellido, dni, fecha_nacimiento, fecha_registro, mail, nombre, telefono)
 SELECT DISTINCT
@@ -353,176 +353,22 @@ SELECT DISTINCT
 	PROPIETARIO_TELEFONO
 FROM gd_esquema.Maestra
 
+INSERT INTO [SQLITO].[pago_alquiler](codigo_pago, alquiler, medio_pago, fecha_pago, numero_periodo, descripcion_periodo, fecha_inicio_periodo, fecha_fin_periodo, importe)
+SELECT DISTINCT
+	PAGO_ALQUILER_CODIGO,
+	A.ALQUILER,
+	M.MEDIO_PAGO,
+	PAGO_ALQUILER_FECHA,
+	PAGO_ALQUILER_NRO_PERIODO,
+	PAGO_ALQUILER_DESC, 
+	PAGO_ALQUILER_FEC_INI,
+	PAGO_ALQUILER_FEC_FIN,
+	PAGO_ALQUILER_IMPORTE
+	FROM gd_esquema.Maestra
+	JOIN [SQLITO].alquiler as A ON a.codigo_alquiler = 
+--END
+--GO
 
-END
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-=======
 
 --CREATE PROCEDURE sp_ImportarAgentes
 --AS
@@ -531,12 +377,9 @@ END
 
 --END;
 
-INSERT INTO [SQLITO].[agente_inmobiliario]
-    (Nombre, Apellido, dni, fecha_Registro, telefono, mail, fecha_nacimiento)
-	SELECT DISTINCT AGENTE_NOMBRE, AGENTE_APELLIDO, AGENTE_DNI, AGENTE_FECHA_REGISTRO, AGENTE_TELEFONO, AGENTE_MAIL, AGENTE_FECHA_NAC
-    FROM [gd_esquema].[maestra]
+--INSERT INTO [SQLITO].[agente_inmobiliario]
+--    (Nombre, Apellido, dni, fecha_Registro, telefono, mail, fecha_nacimiento)
+--	SELECT DISTINCT AGENTE_NOMBRE, AGENTE_APELLIDO, AGENTE_DNI, AGENTE_FECHA_REGISTRO, AGENTE_TELEFONO, AGENTE_MAIL, AGENTE_FECHA_NAC
+--    FROM [gd_esquema].[maestra]
     --WHERE [alguna_condición_si_la_necesitas];
     
->>>>>>> 4800ead2c51d9903f108a108f3649cebe07c6281
-
-
