@@ -1,10 +1,5 @@
-IF EXISTS (SELECT * FROM sys.schemas WHERE name = 'SQLITO')
-DROP SCHEMA [SQLITO]
+USE [GD2C2023]
 GO
-
-CREATE SCHEMA SQLITO
-GO
--- DROP DE TABLAS
 
 IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[SQLITO].[pago_alquiler]') AND type in (N'U'))
 DROP TABLE [SQLITO].[pago_alquiler]
@@ -124,6 +119,20 @@ GO
 
 IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[SQLITO].[estado_inmueble]') AND type in (N'U'))
 DROP TABLE [SQLITO].[estado_inmueble]
+GO
+
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND object_id = OBJECT_ID(N'[SQLITO].[MIGRACION]'))
+DROP PROCEDURE [SQLITO].[MIGRACION]
+GO
+
+IF EXISTS (SELECT * FROM sys.schemas WHERE name = 'SQLITO')
+DROP SCHEMA [SQLITO]
+GO
+
+/**************************************************CREACION DE TABLAS***************************************************************************/
+
+
+CREATE SCHEMA SQLITO
 GO
 
 -- CREACION DE TABLAS INMUEBLE
@@ -254,7 +263,6 @@ CREATE TABLE [SQLITO].[agente_inmobiliario](
 	[telefono] NUMERIC(18,0)
 )
 
-
 CREATE TABLE [SQLITO].[anuncio](
 	[codigo_anuncio] NUMERIC(18,0) NOT NULL PRIMARY KEY,
 	[estado] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[estado_anuncio] ([estado_anuncio_id]),
@@ -342,9 +350,7 @@ CREATE TABLE [SQLITO].[pago_alquiler](
 
 GO
 
-IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND object_id = OBJECT_ID(N'[SQLITO].[MIGRACION]'))
-DROP PROCEDURE [SQLITO].[MIGRACION]
-GO
+/***********************************************MIGRACION DE TABLAS******************************************************************************/
 
 CREATE PROCEDURE [SQLITO].[MIGRACION] AS
 BEGIN
@@ -360,33 +366,59 @@ SELECT DISTINCT
 	PROPIETARIO_TELEFONO
 FROM gd_esquema.Maestra
 
-INSERT INTO [SQLITO].[pago_alquiler](codigo_pago, alquiler, medio_pago, fecha_pago, numero_periodo, descripcion_periodo, fecha_inicio_periodo, fecha_fin_periodo, importe)
+INSERT INTO [SQLITO].[tipo_inmueble](nombre)
 SELECT DISTINCT
-	PAGO_ALQUILER_CODIGO,
-	A.ALQUILER,
-	M.MEDIO_PAGO,
-	PAGO_ALQUILER_FECHA,
-	PAGO_ALQUILER_NRO_PERIODO,
-	PAGO_ALQUILER_DESC, 
-	PAGO_ALQUILER_FEC_INI,
-	PAGO_ALQUILER_FEC_FIN,
-	PAGO_ALQUILER_IMPORTE
-	FROM gd_esquema.Maestra
-	JOIN [SQLITO].alquiler as A ON a.codigo_alquiler = 
---END
---GO
+	INMUEBLE_TIPO_INMUEBLE
+FROM gd_esquema.Maestra
+WHERE
+    INMUEBLE_TIPO_INMUEBLE IS NOT NULL
 
+INSERT INTO [SQLITO].[disposicion](nombre)
+SELECT DISTINCT
+	INMUEBLE_DISPOSICION
+FROM gd_esquema.Maestra
+WHERE
+    INMUEBLE_DISPOSICION IS NOT NULL
 
---CREATE PROCEDURE sp_ImportarAgentes
---AS
---BEGIN
+INSERT INTO [SQLITO].[moneda](tipo_moneda)
+SELECT DISTINCT
+PAGO_VENTA_MONEDA
+FROM gd_esquema.Maestra
+WHERE
+    PAGO_VENTA_MONEDA IS NOT NULL
 
+/*
+INSERT INTO [SQLITO].[pago_alquiler](codigo_pago, alquiler, medio_pago, fecha_pago, numero_periodo, descripcion_periodo, fecha_inicio_periodo, fecha_fin_periodo, importe)
+INSERT INTO [SQLITO].[agencia]()
+INSERT INTO [SQLITO].[agente_inmobiliario]
+INSERT INTO [SQLITO].[alquiler]
+INSERT INTO [SQLITO].[anuncio]
+INSERT INTO [SQLITO].[barrio]
+INSERT INTO [SQLITO].[caracteristica]
+INSERT INTO [SQLITO].[caracteristica_X_inmueble]
+INSERT INTO [SQLITO].[detalle_importe_alquiler]
+INSERT INTO [SQLITO].[direccion]
+INSERT INTO [SQLITO].[estado_alquiler]
+INSERT INTO [SQLITO].[estado_anuncio]
+INSERT INTO [SQLITO].[estado_inmueble]
+INSERT INTO [SQLITO].[inmueble]
+INSERT INTO [SQLITO].[inquilino]
+INSERT INTO [SQLITO].[localidad]
+INSERT INTO [SQLITO].[medio_pago]
+INSERT INTO [SQLITO].[moneda]
+INSERT INTO [SQLITO].[orientacion]
+INSERT INTO [SQLITO].[pago_compra_inmueble]
+INSERT INTO [SQLITO].[propietario_X_inmueble]
+INSERT INTO [SQLITO].[provincia]
+INSERT INTO [SQLITO].[tipo_ambiente]
+INSERT INTO [SQLITO].[tipo_inmueble]
+INSERT INTO [SQLITO].[tipo_operacion]
+INSERT INTO [SQLITO].[tipo_periodo]
+*/
+END
+GO
 
---END;
+EXEC SQLITO.MIGRACION;
+GO
 
---INSERT INTO [SQLITO].[agente_inmobiliario]
---    (Nombre, Apellido, dni, fecha_Registro, telefono, mail, fecha_nacimiento)
---	SELECT DISTINCT AGENTE_NOMBRE, AGENTE_APELLIDO, AGENTE_DNI, AGENTE_FECHA_REGISTRO, AGENTE_TELEFONO, AGENTE_MAIL, AGENTE_FECHA_NAC
---    FROM [gd_esquema].[maestra]
-    --WHERE [alguna_condición_si_la_necesitas];
     
