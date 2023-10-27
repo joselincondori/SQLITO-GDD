@@ -429,6 +429,10 @@ UNION
 SELECT DISTINCT SUCURSAL_PROVINCIA
 FROM gd_esquema.Maestra
 
+select * from [SQLITO].provincia
+select * from [SQLITO].localidad
+
+
 INSERT INTO [SQLITO].[localidad](nombre, provincia)
 SELECT DISTINCT
     INMUEBLE_LOCALIDAD,
@@ -612,8 +616,6 @@ INSERT INTO [SQLITO].[alquiler](anuncio,comision,fecha_fin,fecha_inicio,codigo_a
     ALQUILER_CODIGO IS NOT NULL AND
     ALQUILER_GASTOS_AVERIGUA IS NOT NULL AND
     ALQUILER_DEPOSITO IS NOT NULL 
-
---SELECT INSERT [SQLITO].[pago_alquiler](codigo_pago, fecha_fin_periodo, descripcion_periodo, fecha_inicio_periodo, medio_pago, alquiler, fecha_pago, importe, numero_periodo)
 
 /*
 INSERT INTO [SQLITO].[pago_alquiler]
