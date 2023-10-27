@@ -129,8 +129,16 @@ GO
 /**************************************************CREACION DE TABLAS***************************************************************************/
 
 
-CREATE SCHEMA SQLITO
+IF NOT EXISTS (SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'SQLITO')
+BEGIN
+    EXEC('CREATE SCHEMA SQLITO')
+END
 GO
+
+CREATE PROCEDURE [SQLITO].[MIGRACION] AS
+BEGIN
+
+BEGIN TRANSACTION
 
 -- CREACION DE TABLAS INMUEBLE
 
@@ -148,6 +156,7 @@ CREATE TABLE [SQLITO].[disposicion](
 	[disposicion_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[nombre] NVARCHAR(100) 
 )
+
 
 CREATE TABLE [SQLITO].[orientacion](
 	[orientacion_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
@@ -188,9 +197,10 @@ CREATE TABLE [SQLITO].[caracteristica](
 )
 
 CREATE TABLE [SQLITO].[inmueble] (
-	[codigo_inmueble] NUMERIC(18,0) NOT NULL PRIMARY KEY,
+	[inmueble_id]  NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
+	[codigo_inmueble] NUMERIC(18,0),
 	[tipo_inmueble] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[tipo_inmueble] ([tipo_inmueble_id]) ,
-	[descripcion] VARCHAR(100),
+	[descripcion] NVARCHAR(100),
 	[direccion] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[direccion] ([direccion_id]) ,
 	[tipo_ambiente] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[tipo_ambiente] ([tipo_ambiente_id]) ,
 	[supericie_total] NUMERIC(18,2),
@@ -203,7 +213,7 @@ CREATE TABLE [SQLITO].[inmueble] (
 
 CREATE TABLE [SQLITO].[caracteristica_X_inmueble](
 	[caracteristica] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[caracteristica] ([caracteristica_id]) ,
-	[inmueble] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[inmueble] ([codigo_inmueble]) ,
+	[inmueble] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[inmueble] ([inmueble_id]) ,
 )
 
 CREATE TABLE [SQLITO].[propietario](
@@ -219,7 +229,7 @@ CREATE TABLE [SQLITO].[propietario](
 
 CREATE TABLE [SQLITO].[propietario_X_inmueble](
 	[propietario] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[propietario] ([propietario_id]) ,
-	[inmueble] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[inmueble] ([codigo_inmueble]) ,
+	[inmueble] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[inmueble] ([inmueble_id]) ,
 )
 
 -- CREACION TABLAS ANUNCIO
@@ -261,11 +271,12 @@ CREATE TABLE [SQLITO].[agente_inmobiliario](
 )
 
 CREATE TABLE [SQLITO].[anuncio](
-	[codigo_anuncio] NUMERIC(19,0) NOT NULL PRIMARY KEY,
+	[anuncio_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
+	[codigo_anuncio] NUMERIC(19,0),
 	[estado] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[estado_anuncio] ([estado_anuncio_id]) ,
 	[agente] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[agente_inmobiliario] ([agente_inmobiliario_id]) ,
 	[moneda] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[moneda] ([moneda_id]) ,
-	[inmueble] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[inmueble] ([codigo_inmueble]),
+	[inmueble] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[inmueble] ([inmueble_id]),
 	[tipo_periodo] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[tipo_periodo] ([tipo_periodo_id]) ,
 	[tipo_operacion] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[tipo_operacion] ([tipo_operacion_id]) ,
 	[precio_publicado_inmueble] NUMERIC(18,2),
@@ -275,8 +286,9 @@ CREATE TABLE [SQLITO].[anuncio](
 )
 
 CREATE TABLE [SQLITO].[venta](
-	[codigo_venta] NUMERIC(18,0) NOT NULL PRIMARY KEY,
-	[anuncio] NUMERIC(19,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[anuncio] ([codigo_anuncio]) ,
+	[venta_id]  NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
+	[codigo_venta] NUMERIC(18,0),
+	[anuncio] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[anuncio] ([anuncio_id]) ,
 	[fecha_venta] DATETIME,
 	[precio_venta] NUMERIC(18,0),
 	[comision_inmobiliaria] NUMERIC(18,0)
@@ -291,7 +303,7 @@ CREATE TABLE [SQLITO].[pago_compra_inmueble](
 	[pago_compra_inmueble]  NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[moneda] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[moneda] ([moneda_id]) ,
 	[medio_pago]  NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[medio_pago] ([medio_pago_id]) ,
-	[venta]  NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[venta] ([codigo_venta]) ,
+	[venta]  NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[venta] ([venta_id]) ,
 	[cotizacion] NUMERIC(18,2)
 )
 
@@ -314,8 +326,9 @@ CREATE TABLE [SQLITO].[estado_alquiler](
 )
 
 CREATE TABLE [SQLITO].[alquiler](
-	[codigo_alquiler]  NUMERIC(18,0) NOT NULL PRIMARY KEY,
-	[anuncio] NUMERIC(19,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[anuncio] ([codigo_anuncio]) ,
+	[alquiler_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
+	[codigo_alquiler]  NUMERIC(18,0),
+	[anuncio] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[anuncio] ([anuncio_id]) ,
 	[inquilino] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[inquilino] ([inquilino_id]) ,
 	[estado_alquiler] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[estado_alquiler] ([estado_alquiler_id]) ,
 	[fecha_inicio] DATETIME,
@@ -327,15 +340,16 @@ CREATE TABLE [SQLITO].[alquiler](
 
 CREATE TABLE [SQLITO].[detalle_importe_alquiler](
 	[detalle_importe_alquiler_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
-	[alquiler] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[alquiler] ([codigo_alquiler]) ,
+	[alquiler] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[alquiler] ([alquiler_id]) ,
 	[numero_periodo_inicio] NUMERIC(18,0),
 	[numero_periodo_fin] NUMERIC(18,0),
 	[precio] NUMERIC(18,2)
 )
 
 CREATE TABLE [SQLITO].[pago_alquiler](
-	[codigo_pago]  NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
-	[alquiler] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[alquiler] ([codigo_alquiler]) ,
+	[pago_alquiler_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
+	[codigo_pago]  NUMERIC(18,0),
+	[alquiler] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[alquiler] ([alquiler_id]) ,
 	[medio_pago] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[medio_pago] ([medio_pago_id]) ,
 	[fecha_pago] DATETIME,
 	[numero_periodo] NUMERIC(18,0),
@@ -345,12 +359,9 @@ CREATE TABLE [SQLITO].[pago_alquiler](
 	[importe] NUMERIC(18,2)
 )
 
-GO
 
 /***********************************************MIGRACION DE TABLAS******************************************************************************/
 
-CREATE PROCEDURE [SQLITO].[MIGRACION] AS
-BEGIN
 
 INSERT INTO [SQLITO].[propietario](apellido, dni, fecha_nacimiento, fecha_registro, mail, nombre, telefono)
 SELECT DISTINCT
@@ -423,55 +434,66 @@ WHERE
 INSERT INTO [SQLITO].[provincia](nombre)
 SELECT DISTINCT INMUEBLE_PROVINCIA
 FROM gd_esquema.Maestra
-
-UNION
-
-SELECT DISTINCT SUCURSAL_PROVINCIA
-FROM gd_esquema.Maestra
-
-select * from [SQLITO].provincia
-select * from [SQLITO].localidad
-
+WHERE
+    INMUEBLE_PROVINCIA IS NOT NULL
 
 INSERT INTO [SQLITO].[localidad](nombre, provincia)
 SELECT DISTINCT
-    INMUEBLE_LOCALIDAD,
+    M.INMUEBLE_LOCALIDAD,
     P.provincia_id
 FROM gd_esquema.Maestra M
 INNER JOIN [SQLITO].[provincia] AS P ON M.INMUEBLE_PROVINCIA = P.nombre
+WHERE M.INMUEBLE_LOCALIDAD IS NOT NULL
 UNION
 SELECT DISTINCT
-    SUCURSAL_LOCALIDAD,
+    M.SUCURSAL_LOCALIDAD,
     P.provincia_id
 FROM gd_esquema.Maestra M
 INNER JOIN [SQLITO].[provincia] AS P ON M.SUCURSAL_PROVINCIA = P.nombre
+WHERE M.SUCURSAL_LOCALIDAD IS NOT NULL
+
 
 INSERT INTO [SQLITO].[barrio](nombre, localidad)
-	SELECT DISTINCT
-	INMUEBLE_BARRIO,
+	SELECT DISTINCT 
+	M.INMUEBLE_BARRIO, 
 	L.localidad_id
-	from gd_esquema.Maestra M
-	INNER JOIN localidad AS L ON M.INMUEBLE_LOCALIDAD = L.nombre
+	FROM gd_esquema.Maestra AS M
+	INNER JOIN Provincia AS P ON M.INMUEBLE_PROVINCIA = P.nombre   
+	INNER JOIN Localidad AS L ON M.INMUEBLE_LOCALIDAD = L.nombre
+	WHERE 
+	M.INMUEBLE_BARRIO IS NOT NULL 
+	AND L.provincia = P.provincia_id;
 
 INSERT INTO [SQLITO].direccion(barrio, descripcion)
 SELECT DISTINCT 
     B.barrio_id,
-    INMUEBLE_DIRECCION
+    M.INMUEBLE_DIRECCION
 FROM gd_esquema.Maestra M
 INNER JOIN [SQLITO].barrio AS B ON M.INMUEBLE_BARRIO = B.nombre
+INNER JOIN [SQLITO].localidad AS L ON M.INMUEBLE_LOCALIDAD = L.nombre
+INNER JOIN [SQLITO].provincia AS P ON M.INMUEBLE_PROVINCIA = P.nombre
+WHERE M.INMUEBLE_DIRECCION IS NOT NULL
+AND L.provincia = P.provincia_id
+AND B.localidad = L.localidad_id
 UNION
 SELECT DISTINCT 
     B.barrio_id,
-    SUCURSAL_DIRECCION
+    M.SUCURSAL_DIRECCION
 FROM gd_esquema.Maestra M
-INNER JOIN barrio AS B ON M.INMUEBLE_BARRIO = B.nombre
+INNER JOIN [SQLITO].barrio AS B ON M.INMUEBLE_BARRIO = B.nombre
+INNER JOIN [SQLITO].localidad AS L ON M.INMUEBLE_LOCALIDAD = L.nombre
+INNER JOIN [SQLITO].provincia AS P ON M.INMUEBLE_PROVINCIA = P.nombre
+WHERE M.SUCURSAL_DIRECCION IS NOT NULL
+AND L.provincia = P.provincia_id
+AND B.localidad = L.localidad_id
 
 INSERT INTO [SQLITO].[agencia](nombre, direccion)
 	SELECT DISTINCT 
-	SUCURSAL_NOMBRE,
+	M.SUCURSAL_NOMBRE,
 	D.direccion_id
 	from gd_esquema.Maestra M
 	INNER JOIN direccion AS D ON M.SUCURSAL_DIRECCION = D.descripcion
+	WHERE M.SUCURSAL_NOMBRE IS NOT NULL
 
 INSERT INTO [SQLITO].[agente_inmobiliario](nombre,apellido,dni,fecha_registro,telefono,mail,fecha_nacimiento,agencia)
 	SELECT DISTINCT 
@@ -523,79 +545,71 @@ INSERT INTO [SQLITO].[inquilino](nombre, apellido, dni, fecha_nacimiento, fecha_
     INQUILINO_FECHA_NAC IS NOT NULL AND
     INQUILINO_FECHA_REGISTRO IS NOT NULL AND
     INQUILINO_MAIL IS NOT NULL AND
-    INQUILINO_TELEFONO IS NOT NULL
+    INQUILINO_TELEFONO IS NOT NULL;
 
---select * FROM gd_esquema.Maestra
---WHERE INMUEBLE_CODIGO != '0'
 
 INSERT INTO [SQLITO].[inmueble](descripcion, codigo_inmueble, antiguedad, direccion, disposicion, estado_inmueble, orientacion, supericie_total, expensas, tipo_inmueble, tipo_ambiente)
 	SELECT DISTINCT
-	INMUEBLE_DESCRIPCION,
-	INMUEBLE_CODIGO,
-	INMUEBLE_ANTIGUEDAD,
+	M.INMUEBLE_DESCRIPCION,
+	M.INMUEBLE_CODIGO,
+	M.INMUEBLE_ANTIGUEDAD,
 	D.direccion_id,
-	INMUEBLE_DISPOSICION,
+	S.disposicion_id,
 	E.estado_inmueble_id,
-	INMUEBLE_ORIENTACION,
-	INMUEBLE_SUPERFICIETOTAL,
-	INMUEBLE_EXPESAS,
+	O.orientacion_id,
+	M.INMUEBLE_SUPERFICIETOTAL,
+	M.INMUEBLE_EXPESAS,
 	T.tipo_inmueble_id,
 	A.tipo_ambiente_id
-	from gd_esquema.Maestra M
-	join direccion AS D ON (M.INMUEBLE_DIRECCION = D.descripcion)
-	join estado_inmueble AS E ON (M.INMUEBLE_ESTADO = E.nombre)
-	join tipo_inmueble AS T ON (M.INMUEBLE_TIPO_INMUEBLE = T.nombre)
-	join tipo_ambiente AS A ON (M.INMUEBLE_CANT_AMBIENTES = A.nombre)
+	FROM gd_esquema.Maestra M
+	JOIN direccion AS D ON (M.INMUEBLE_DIRECCION = D.descripcion)
+	JOIN estado_inmueble AS E ON (M.INMUEBLE_ESTADO = E.nombre)
+	JOIN disposicion AS S ON (M.INMUEBLE_DISPOSICION = S.nombre)
+	JOIN orientacion AS O ON (M.INMUEBLE_ORIENTACION = O.nombre)
+	JOIN tipo_inmueble AS T ON (M.INMUEBLE_TIPO_INMUEBLE = T.nombre)
+	JOIN tipo_ambiente AS A ON (M.INMUEBLE_CANT_AMBIENTES = A.nombre)
 	WHERE
-    INMUEBLE_DESCRIPCION IS NOT NULL AND
-    INMUEBLE_CODIGO IS NOT NULL AND
-    INMUEBLE_ANTIGUEDAD IS NOT NULL AND
-    INMUEBLE_DISPOSICION IS NOT NULL AND
-    INMUEBLE_ORIENTACION IS NOT NULL AND
-    INMUEBLE_SUPERFICIETOTAL IS NOT NULL AND
-    INMUEBLE_EXPESAS IS NOT NULL
-
-	--select * from [SQLITO].anuncio
-
-	--select * from [SQLITO].alquiler
-
-	--select * from gd_esquema.Maestra
-
-	--select * from [SQLITO].inmueble
+	M.INMUEBLE_DESCRIPCION IS NOT NULL AND
+	M.INMUEBLE_CODIGO IS NOT NULL AND
+	M.INMUEBLE_ANTIGUEDAD IS NOT NULL AND
+	M.INMUEBLE_SUPERFICIETOTAL IS NOT NULL AND
+	M.INMUEBLE_EXPESAS IS NOT NULL 
 
 
-INSERT INTO [SQLITO].[anuncio](codigo_anuncio, estado, moneda, fecha_finalizacion, agente, fecha_publicacion, inmueble, costo_anuncio,precio_publicado_inmueble, tipo_operacion, tipo_periodo)
+INSERT INTO [SQLITO].[anuncio](codigo_anuncio, estado, moneda, fecha_finalizacion, agente, fecha_publicacion, inmueble, costo_anuncio, precio_publicado_inmueble, tipo_operacion, tipo_periodo)
 	SELECT DISTINCT 
-	ANUNCIO_CODIGO,
+	M.ANUNCIO_CODIGO,
 	E.estado_anuncio_id,
 	MO.moneda_id,
-	ANUNCIO_FECHA_FINALIZACION,
+	M.ANUNCIO_FECHA_FINALIZACION,
 	A.agente_inmobiliario_id,
-	ANUNCIO_FECHA_PUBLICACION,
-	I.codigo_inmueble,
-	ANUNCIO_COSTO_ANUNCIO,
-	ANUNCIO_PRECIO_PUBLICADO,
+	M.ANUNCIO_FECHA_PUBLICACION,
+	I.inmueble_id,
+	M.ANUNCIO_COSTO_ANUNCIO,
+	M.ANUNCIO_PRECIO_PUBLICADO,
 	O.tipo_operacion_id,
 	P.tipo_periodo_id
 	from gd_esquema.Maestra M
-	join estado_anuncio AS E on (M.ANUNCIO_ESTADO = E.nombre)
-	join moneda AS MO on (M.PAGO_VENTA_MONEDA = MO.tipo_moneda)
-	join agente_inmobiliario AS A on (M.AGENTE_NOMBRE = A.nombre)
-	join inmueble AS I on (M.INMUEBLE_DESCRIPCION = I.descripcion)
-	join tipo_operacion AS O on (M.ANUNCIO_TIPO_OPERACION = O.nombre)
-	join tipo_periodo AS P on (M.ANUNCIO_TIPO_PERIODO = O.nombre)
+	join [SQLITO].estado_anuncio AS E on (M.ANUNCIO_ESTADO = E.nombre)
+	join [SQLITO].moneda AS MO on (M.PAGO_VENTA_MONEDA = MO.tipo_moneda)
+	join [SQLITO].agente_inmobiliario AS A on (M.AGENTE_NOMBRE = A.nombre)
+	join [SQLITO].inmueble AS I on ( M.INMUEBLE_CODIGO = I.codigo_inmueble)
+	join [SQLITO].tipo_operacion AS O on (M.ANUNCIO_TIPO_OPERACION = O.nombre)
+	join [SQLITO].tipo_periodo AS P on (M.ANUNCIO_TIPO_PERIODO = P.nombre)
 	WHERE
-    ANUNCIO_CODIGO IS NOT NULL AND
-    ANUNCIO_ESTADO IS NOT NULL AND
-    ANUNCIO_FECHA_FINALIZACION IS NOT NULL AND
-    ANUNCIO_FECHA_PUBLICACION IS NOT NULL AND
-    ANUNCIO_COSTO_ANUNCIO IS NOT NULL AND
-    ANUNCIO_PRECIO_PUBLICADO IS NOT NULL 
+	M.AGENTE_NOMBRE IS NOT NULL AND
+	M.PAGO_VENTA_MONEDA IS NOT NULL AND
+    M.ANUNCIO_CODIGO IS NOT NULL AND
+    M.ANUNCIO_ESTADO IS NOT NULL AND
+    M.ANUNCIO_FECHA_FINALIZACION IS NOT NULL AND
+    M.ANUNCIO_FECHA_PUBLICACION IS NOT NULL AND
+    M.ANUNCIO_COSTO_ANUNCIO IS NOT NULL AND
+    M.ANUNCIO_PRECIO_PUBLICADO IS NOT NULL 
 
 
 INSERT INTO [SQLITO].[alquiler](anuncio,comision,fecha_fin,fecha_inicio,codigo_alquiler,gastos_de_averiguacion, deposito, estado_alquiler, inquilino)
 	SELECT DISTINCT 
-	A.codigo_anuncio,
+	A.anuncio_id,
 	ALQUILER_COMISION,
 	ALQUILER_FECHA_FIN,
 	ALQUILER_FECHA_INICIO,
@@ -617,6 +631,29 @@ INSERT INTO [SQLITO].[alquiler](anuncio,comision,fecha_fin,fecha_inicio,codigo_a
     ALQUILER_GASTOS_AVERIGUA IS NOT NULL AND
     ALQUILER_DEPOSITO IS NOT NULL 
 
+INSERT INTO [SQLITO].[pago_alquiler](numero_periodo, fecha_inicio_periodo, fecha_fin_periodo, codigo_pago, descripcion_periodo, alquiler, fecha_pago, importe, medio_pago)
+	SELECT DISTINCT
+	M.PAGO_ALQUILER_NRO_PERIODO,
+	M.PAGO_ALQUILER_FEC_INI,
+	M.PAGO_ALQUILER_FEC_FIN,
+	M.PAGO_ALQUILER_CODIGO,
+	M.PAGO_ALQUILER_DESC,
+	A.alquiler_id,
+	M.PAGO_ALQUILER_FECHA,
+	M.PAGO_ALQUILER_IMPORTE,
+	MP.medio_pago_id
+	from gd_esquema.Maestra M
+	join medio_pago AS MP ON M.PAGO_ALQUILER_MEDIO_PAGO = MP.nombre
+	join alquiler AS A ON M.ALQUILER_CODIGO = A.codigo_alquiler
+	WHERE
+    M.PAGO_ALQUILER_NRO_PERIODO IS NOT NULL AND
+    M.PAGO_ALQUILER_FEC_INI IS NOT NULL AND
+    M.PAGO_ALQUILER_FEC_FIN IS NOT NULL AND
+    M.PAGO_ALQUILER_CODIGO IS NOT NULL AND
+    M.PAGO_ALQUILER_DESC IS NOT NULL AND
+    M.PAGO_ALQUILER_IMPORTE IS NOT NULL AND
+    M.PAGO_ALQUILER_FECHA IS NOT NULL 
+
 /*
 INSERT INTO [SQLITO].[pago_alquiler]
 INSERT INTO [SQLITO].[caracteristica]
@@ -624,9 +661,11 @@ INSERT INTO [SQLITO].[caracteristica_X_inmueble]
 INSERT INTO [SQLITO].[pago_compra_inmueble]
 INSERT INTO [SQLITO].[propietario_X_inmueble]
 */
+
+COMMIT
 END
 GO
-
+ 
 EXEC SQLITO.MIGRACION;
 GO
 
