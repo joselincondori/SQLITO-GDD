@@ -33,6 +33,10 @@ IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[SQLITO].[ven
 DROP TABLE [SQLITO].[venta]
 GO
 
+IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[SQLITO].[comprador]') AND type in (N'U'))
+DROP TABLE [SQLITO].[comprador]
+GO
+
 IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[SQLITO].[anuncio]') AND type in (N'U'))
 DROP TABLE [SQLITO].[anuncio]
 GO
@@ -240,8 +244,8 @@ CREATE TABLE [SQLITO].[agencia](
 )
 
 CREATE TABLE [SQLITO].[agente_inmobiliario](
-	[agente_inmobiliario_id] NUMERIC(18,0) IDENTITY(1,1) NOT NULL PRIMARY KEY,
-	[agencia] NUMERIC(18,0) FOREIGN KEY REFERENCES [SQLITO].[agencia] ([agencia_id]) ,
+	[agente_inmobiliario_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
+	[agencia] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[agencia] ([agencia_id]) ,
 	[nombre] VARCHAR(100),
 	[apellido] VARCHAR(100),
 	[dni] NUMERIC(18,0),
@@ -255,8 +259,8 @@ CREATE TABLE [SQLITO].[anuncio](
 	[anuncio_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[codigo_anuncio] NUMERIC(19,0),
 	[estado] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[estado_anuncio] ([estado_anuncio_id]) ,
-	[agente] NUMERIC(18,0) FOREIGN KEY REFERENCES [SQLITO].[agente_inmobiliario] ([agente_inmobiliario_id]) ,
-	[moneda] NUMERIC(18,0) FOREIGN KEY REFERENCES [SQLITO].[moneda] ([moneda_id]) ,
+	[agente] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[agente_inmobiliario] ([agente_inmobiliario_id]) ,
+	[moneda] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[moneda] ([moneda_id]) ,
 	[inmueble] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[inmueble] ([inmueble_id]),
 	[tipo_periodo] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[tipo_periodo] ([tipo_periodo_id]) ,
 	[tipo_operacion] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[tipo_operacion] ([tipo_operacion_id]) ,
@@ -266,13 +270,25 @@ CREATE TABLE [SQLITO].[anuncio](
 	[costo_anuncio] NUMERIC(18,2)
 )
 
+CREATE TABLE [SQLITO].[comprador](
+	[comprador_id] NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
+	[nombre] VARCHAR(100),
+	[apellido] VARCHAR(100),
+	[dni] NUMERIC(18,0),
+	[fecha_registro] DATETIME,
+	[telefono] NUMERIC(18,0),
+	[mail] VARCHAR(100),
+	[fecha_nacimiento] DATETIME
+)
+
 CREATE TABLE [SQLITO].[venta](
 	[venta_id]  NUMERIC(18,0) NOT NULL IDENTITY PRIMARY KEY,
 	[codigo_venta] NUMERIC(18,0),
 	[anuncio] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[anuncio] ([anuncio_id]) ,
 	[fecha_venta] DATETIME,
 	[precio_venta] NUMERIC(18,0),
-	[comision_inmobiliaria] NUMERIC(18,0)
+	[comision_inmobiliaria] NUMERIC(18,0),
+	[comprador] NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[comprador] ([comprador_id])
 )
 
 CREATE TABLE [SQLITO].[medio_pago](
@@ -344,6 +360,10 @@ CREATE NONCLUSTERED INDEX IDX_AGENCIA ON [SQLITO].[agencia] (nombre);
 
 CREATE NONCLUSTERED INDEX IDX_AGENTE ON [SQLITO].[agente_inmobiliario] (nombre);
 
+CREATE NONCLUSTERED INDEX IDX_COMPRADOR_NOMBRE ON [SQLITO].[comprador] (nombre);
+
+CREATE NONCLUSTERED INDEX IDX_COMPRADOR_DNI ON [SQLITO].[comprador] (dni);
+
 CREATE NONCLUSTERED INDEX IDX_AGENTE_ID ON [SQLITO].[agente_inmobiliario] (agente_inmobiliario_id);
 
 CREATE NONCLUSTERED INDEX IDX_AGENTE_DNI ON [SQLITO].[agente_inmobiliario] (dni);
@@ -412,7 +432,34 @@ INSERT INTO [SQLITO].[propietario](apellido, dni, fecha_nacimiento, fecha_regist
 		PROPIETARIO_NOMBRE, 
 		PROPIETARIO_TELEFONO
 	FROM gd_esquema.Maestra 
+	WHERE
+		PROPIETARIO_NOMBRE IS NOT NULL AND
+		PROPIETARIO_APELLIDO IS NOT NULL AND
+		PROPIETARIO_DNI IS NOT NULL AND
+		PROPIETARIO_FECHA_NAC IS NOT NULL AND
+		PROPIETARIO_FECHA_REGISTRO IS NOT NULL AND
+		PROPIETARIO_MAIL IS NOT NULL AND
+		PROPIETARIO_TELEFONO IS NOT NULL;
 
+
+INSERT INTO [SQLITO].[comprador](apellido, dni, fecha_nacimiento, fecha_registro, mail, nombre, telefono)
+	SELECT DISTINCT
+		COMPRADOR_APELLIDO,
+		COMPRADOR_DNI,
+		COMPRADOR_FECHA_NAC,
+		COMPRADOR_FECHA_REGISTRO,
+		COMPRADOR_MAIL,
+		COMPRADOR_NOMBRE, 
+		COMPRADOR_TELEFONO
+	FROM gd_esquema.Maestra 
+	WHERE
+		COMPRADOR_NOMBRE IS NOT NULL AND
+		COMPRADOR_APELLIDO IS NOT NULL AND
+		COMPRADOR_DNI IS NOT NULL AND
+		COMPRADOR_FECHA_NAC IS NOT NULL AND
+		COMPRADOR_FECHA_REGISTRO IS NOT NULL AND
+		COMPRADOR_MAIL IS NOT NULL AND
+		COMPRADOR_TELEFONO IS NOT NULL;
 
 INSERT INTO [SQLITO].[tipo_inmueble](nombre)
 	SELECT DISTINCT
@@ -755,15 +802,17 @@ INSERT INTO [SQLITO].[caracteristica_X_inmueble] (inmueble, caracteristica)
 	        WHERE IC.inmueble = I.inmueble_id AND IC.caracteristica = C.caracteristica_id);
 
 
- INSERT INTO [SQLITO].[venta](codigo_venta, anuncio, fecha_venta, precio_venta, comision_inmobiliaria)
+ INSERT INTO [SQLITO].[venta](codigo_venta, anuncio, fecha_venta, precio_venta, comision_inmobiliaria, comprador)
 	SELECT DISTINCT
 		M.VENTA_CODIGO,
 		A.anuncio_id,
 		M.VENTA_FECHA,
 		M.VENTA_PRECIO_VENTA,
-		M.VENTA_COMISION
+		M.VENTA_COMISION,
+		C.comprador_id
 	FROM gd_esquema.Maestra M
 	JOIN anuncio AS A ON M.ANUNCIO_CODIGO = A.codigo_anuncio
+	JOIN comprador AS C ON (M.COMPRADOR_DNI = C.dni AND M.COMPRADOR_NOMBRE = C.nombre)
 	WHERE 
 	M.VENTA_CODIGO IS NOT NULL AND
 	M.VENTA_FECHA IS NOT NULL AND
