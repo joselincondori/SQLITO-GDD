@@ -716,10 +716,12 @@ INSERT INTO [SQLITO].[alquiler](anuncio,comision,fecha_fin,fecha_inicio,codigo_a
 	E.estado_alquiler_id,
 	I.inquilino_id
 	FROM gd_esquema.Maestra M
-	INNER JOIN anuncio AS A ON M.ANUNCIO_CODIGO = A.codigo_anuncio
+	INNER JOIN anuncio AS A ON A.codigo_anuncio = M.ANUNCIO_CODIGO 
 	INNER JOIN estado_alquiler AS E ON M.ALQUILER_ESTADO = E.nombre
 	INNER JOIN inquilino AS I ON (M.INQUILINO_NOMBRE = I.nombre 
-								AND  M.INQUILINO_APELLIDO = I.apellido)
+								AND  M.INQUILINO_APELLIDO = I.apellido
+								AND M.INQUILINO_DNI = i.dni
+								AND M.INQUILINO_MAIL = I.mail)
 	WHERE
     ALQUILER_COMISION IS NOT NULL AND
     ALQUILER_FECHA_FIN IS NOT NULL AND
@@ -727,6 +729,20 @@ INSERT INTO [SQLITO].[alquiler](anuncio,comision,fecha_fin,fecha_inicio,codigo_a
     ALQUILER_CODIGO IS NOT NULL AND
     ALQUILER_GASTOS_AVERIGUA IS NOT NULL AND
     ALQUILER_DEPOSITO IS NOT NULL 
+
+INSERT INTO [SQLITO].[detalle_importe_alquiler](alquiler, numero_periodo_inicio, numero_periodo_fin, precio)
+	SELECT DISTINCT
+		A.alquiler_id,
+		M.DETALLE_ALQ_NRO_PERIODO_INI,
+		M.DETALLE_ALQ_NRO_PERIODO_FIN,
+		M.DETALLE_ALQ_PRECIO
+		FROM gd_esquema.Maestra M
+		INNER JOIN Alquiler A ON A.codigo_alquiler = M.ALQUILER_CODIGO
+		WHERE ALQUILER_CODIGO IS NOT NULL AND M.DETALLE_ALQ_NRO_PERIODO_FIN IS NOT NULL 
+		AND M.DETALLE_ALQ_NRO_PERIODO_INI IS NOT NULL AND DETALLE_ALQ_PRECIO IS NOT NULL;
+
+		
+	
 
 
 INSERT INTO [SQLITO].[pago_alquiler](numero_periodo, fecha_inicio_periodo, fecha_fin_periodo, codigo_pago, descripcion_periodo, alquiler, fecha_pago, importe, medio_pago)
@@ -741,8 +757,9 @@ INSERT INTO [SQLITO].[pago_alquiler](numero_periodo, fecha_inicio_periodo, fecha
 		M.PAGO_ALQUILER_IMPORTE,
 		MP.medio_pago_id
 	FROM gd_esquema.Maestra M
+	JOIN alquiler AS A ON A.codigo_alquiler = M.ALQUILER_CODIGO 
 	JOIN medio_pago AS MP ON M.PAGO_ALQUILER_MEDIO_PAGO = MP.nombre
-	JOIN alquiler AS A ON M.ALQUILER_CODIGO = A.codigo_alquiler
+	
 	WHERE
     M.PAGO_ALQUILER_NRO_PERIODO IS NOT NULL AND
     M.PAGO_ALQUILER_FEC_INI IS NOT NULL AND
