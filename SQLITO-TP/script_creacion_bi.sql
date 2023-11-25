@@ -2,6 +2,10 @@ USE GD2C2023;
 GO
 
 -- Eliminar Procedimientos Almacenados
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'BI_MIGRAR_HECHOS_ANUNCIOS' AND schema_id = SCHEMA_ID('SQLITO'))
+    DROP PROCEDURE [SQLITO].BI_MIGRAR_HECHOS_ANUNCIOS;
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'BI_MIGRAR_HECHOS_ALQUILER' AND schema_id = SCHEMA_ID('SQLITO'))
+    DROP PROCEDURE [SQLITO].BI_MIGRAR_HECHOS_ALQUILER;
 IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'BI_MIGRAR_AMBIENTES' AND schema_id = SCHEMA_ID('SQLITO'))
     DROP PROCEDURE [SQLITO].BI_MIGRAR_AMBIENTES;
 IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'BI_MIGRAR_TIEMPO_PUBLICACION' AND schema_id = SCHEMA_ID('SQLITO'))
@@ -437,54 +441,101 @@ FROM [SQLITO].tipo_inmueble ti
 END
 GO
 
-CREATE PROCEDURE [SQLITO].BI_MIGRAR_HECHOS_ANUNCIOS
+--CREATE PROCEDURE [SQLITO].BI_MIGRAR_HECHOS_ANUNCIOS
+--AS
+--BEGIN
+--INSERT INTO [SQLITO].BI_HECHOS_ANUNCIO(
+--	BI_tiempo,
+--	BI_tipo_operacion,
+--	BI_barrio,
+--	BI_ambientes,
+--	BI_tipo_inmueble,
+--	BI_rango_metros,
+--	BI_tipo_moneda,
+--	BI_agencia,
+--	BI_rango_etario_empleado,
+--	BI_anuncio_fecha_publicacion,
+--	BI_anuncio_fecha_finalizacion,
+--	BI_anuncio_precio_publicado
+--)
+--SELECT
+--	t.BI_TIEMPO_ID, 
+--	tiop.BI_TIPO_OPERACION_ID, 
+--
+--	(SELECT BI_BARRIO_ID FROM BI_BARRIO b
+--	JOIN inmueble i ON  i.barrio = b.BI_BARRIO_ID
+--	WHERE a.inmueble = i.inmueble_id), 
+--
+--	(SELECT BI_AMBIENTES_ID FROM BI_AMBIENTES amb
+--	JOIN inmueble i ON i.tipo_ambiente = amb.BI_AMBIENTES_ID
+--	WHERE a.inmueble = i.inmueble_id), 
+--
+--	(SELECT i.tipo_inmueble FROM BI_TIPO_INMUEBLE tin
+--	JOIN inmueble i ON i.tipo_inmueble = tin.BI_TIPO_INMUEBLE_ID
+--	WHERE I.inmueble_id = A.inmueble), 
+--
+--	rm.BI_RANGO_METROS_ID, 
+--	tm.BI_TIPO_MONEDA_ID, 
+--
+--	(SELECT agencia_id
+--	 FROM agencia s
+--	 JOIN agente_inmobiliario ag ON ag.agencia = agencia_id
+--	 WHERE a.agente = ag.agente_inmobiliario_id),
+--
+--	re.BI_RANGO_ETARIO_ID,
+--	a.fecha_publicacion,
+--	a.FECHA_FINALIZACION,
+--	a.precio_publicado_inmueble
+--FROM [SQLITO].anuncio a
+--JOIN [SQLITO].BI_TIEMPO t ON t.BI_TIEMPO_ANIO = DATEPART(YEAR,a.fecha_publicacion) AND t.BI_TIEMPO_MES = DATEPART(MONTH, a.fecha_publicacion) AND t.BI_TIEMPO_CUATRIMESTRE = DATEPART(QUARTER, a.fecha_publicacion)
+--JOIN [SQLITO].BI_TIPO_OPERACION tiop ON tiop.BI_TIPO_OPERACION_ID = a.tipo_operacion
+--JOIN [SQLITO].BI_RANGO_ETARIO re ON re.BI_RANGO_ETARIO_ID = [SQLITO].CALCULAR_RANGO_ETARIO_EMPLEADO(a.agente)
+--JOIN [SQLITO].BI_RANGO_METROS rm ON rm.BI_RANGO_METROS_ID = [SQLITO].CALCULAR_RANGO_METROS(a.inmueble)
+--JOIN [SQLITO].BI_TIPO_MONEDA tm ON tm.BI_TIPO_MONEDA_ID = a.moneda
+--END
+--GO
+
+CREATE PROCEDURE [SQLITO].BI_MIGRAR_HECHOS_ALQUILER
 AS
 BEGIN
-INSERT INTO [SQLITO].BI_HECHOS_ANUNCIO(
+INSERT INTO [SQLITO].BI_HECHOS_ALQUILER(
+	BI_rango_etario_inquilino,
 	BI_tiempo,
-	BI_tipo_operacion,
 	BI_barrio,
-	BI_ambientes,
-	BI_tipo_inmueble,
-	BI_rango_metros,
-	BI_tipo_moneda,
-	BI_agencia,
-	BI_rango_etario_empleado,
-	BI_anuncio_fecha_publicacion,
-	BI_anuncio_fecha_finalizacion,
-	BI_anuncio_precio_publicado
+	BI_pago_alq_fecha,
+	BI_pago_alq_fecha_vencimiento,
+	BI_pago_alq_importe,
+	BI_alq_comision
 )
 SELECT
-	t.BI_TIEMPO_ID, --ID TIEMPO
-	tiop.BI_TIPO_OPERACION_ID, --ID TIPO OPERACION
-	(SELECT BI_BARRIO_ID FROM BI_BARRIO b
-	JOIN inmueble i ON  i.barrio = b.BI_BARRIO_ID
-	WHERE a.inmueble = i.inmueble_id), --ID BARRIO
-	(SELECT BI_AMBIENTES_ID FROM BI_AMBIENTES amb
-	JOIN inmueble i ON i.tipo_ambiente = amb.BI_AMBIENTES_ID
-	WHERE a.inmueble = i.inmueble_id), --ID AMBIENTES
-	(SELECT tipo_inmueble FROM BI_TIPO_INMUEBLE tin
-	JOIN inmueble i ON i.tipo_inmueble = tin.BI_TIPO_INMUEBLE_ID
-	WHERE I.inmueble_id = A.inmueble), --TIPO INMUEBLES
-	rm.BI_RANGO_METROS_ID, --RANGO METROS
-	tm.BI_TIPO_MONEDA_ID, --TIPO MONEDA
-	(SELECT agencia_id
-	 FROM agencia s
-	 JOIN agente_inmobiliario ag ON ag.agencia = agencia_id
-	 WHERE a.agente = ag.agente_inmobiliario_id), --SUCURSALES
-	re.BI_RANGO_ETARIO_ID, --RANGO ETARIO EMPLEADO
-	a.fecha_publicacion,
-	a.FECHA_FINALIZACION,
-	a.precio_publicado_inmueble
-FROM [SQLITO].anuncio a
-JOIN [SQLITO].BI_TIEMPO t ON t.BI_TIEMPO_ANIO = DATEPART(YEAR,a.fecha_publicacion) AND t.BI_TIEMPO_MES = DATEPART(MONTH, a.fecha_publicacion) AND t.BI_TIEMPO_CUATRIMESTRE = DATEPART(QUARTER, a.fecha_publicacion)
-JOIN [SQLITO].BI_TIPO_OPERACION tiop ON tiop.BI_TIPO_OPERACION_DESCRIPCION = a.tipo_operacion
-JOIN [SQLITO].BI_RANGO_ETARIO re ON re.BI_RANGO_ETARIO_ID = [SQLITO].CALCULAR_RANGO_ETARIO_EMPLEADO(a.agente)
-JOIN [SQLITO].BI_RANGO_METROS rm ON rm.BI_RANGO_METROS_ID = [SQLITO].CALCULAR_RANGO_METROS(a.inmueble)
-JOIN [SQLITO].BI_TIPO_MONEDA tm ON tm.BI_TIPO_MONEDA_ID = a.moneda
+	re.BI_RANGO_ETARIO_ID, 
+	t.BI_TIEMPO_ID,
+	(SELECT BI_BARRIO_ID 
+	 FROM [SQLITO].BI_BARRIO
+	 JOIN [SQLITO].inmueble inm ON inm.barrio = BI_BARRIO_ID
+	 JOIN [SQLITO].anuncio an ON an.INMUEBLE = inm.inmueble_id
+	 WHERE a.anuncio = an.anuncio_id), 
+	 (SELECT fecha_pago --en alguno de estos select devuelve mas de un valor, seguro problema con join inquilino
+	  FROM pago_alquiler pa
+	  JOIN alquiler al ON al.alquiler_id = pa.alquiler
+	  JOIN inquilino inq ON inq.inquilino_id = al.inquilino
+	  WHERE a.inquilino = inq.inquilino_id), 
+	  (SELECT fecha_nacimiento
+	  FROM pago_alquiler pa
+	  JOIN alquiler al ON al.alquiler_id = pa.alquiler
+	  JOIN inquilino inq ON inq.inquilino_id = al.inquilino
+	  WHERE a.inquilino = inq.inquilino_id), 
+	 (SELECT importe
+	  FROM pago_alquiler pa
+	  JOIN alquiler al ON al.alquiler_id = pa.alquiler
+	  JOIN inquilinO inq ON inq.inquilino_id = al.inquilino
+	  WHERE a.inquilino = inq.inquilino_id),
+	  a.COMISION 
+FROM [SQLITO].alquiler a
+JOIN [SQLITO].BI_RANGO_ETARIO re ON re.BI_RANGO_ETARIO_ID = [SQLITO].CALCULAR_RANGO_ETARIO_INQUILINO(a.INQUILINO)
+JOIN [SQLITO].BI_TIEMPO t ON t.BI_TIEMPO_ANIO = DATEPART(YEAR, a.fecha_inicio) AND t.BI_TIEMPO_MES = DATEPART(MONTH, a.FECHA_INICIO) AND t.BI_TIEMPO_CUATRIMESTRE = DATEPART(QUARTER, a.FECHA_INICIO)
 END
 GO
-
 
 BEGIN TRANSACTION
 	EXECUTE [SQLITO].BI_MIGRAR_AMBIENTES
@@ -499,6 +550,9 @@ BEGIN TRANSACTION
 	EXECUTE [SQLITO].BI_MIGRAR_RANGO_ETARIO
 	EXECUTE [SQLITO].BI_MIGRAR_RANGO_METROS
 	EXECUTE [SQLITO].BI_MIGRAR_TIPO_INMUEBLE
+	--EXECUTE [SQLITO].BI_MIGRAR_HECHOS_ANUNCIOS
+	EXECUTE [SQLITO].BI_MIGRAR_HECHOS_ALQUILER
+
 COMMIT;
 
 
