@@ -351,7 +351,8 @@ CREATE TABLE [SQLITO].[pago_alquiler](
 	[descripcion_periodo] VARCHAR(100),
 	[fecha_inicio_periodo] DATETIME,
 	[fecha_fin_periodo] DATETIME,
-	[importe] NUMERIC(18,2)
+	[importe] NUMERIC(18,2),
+	[fecha_vencimiento] DATETIME
 )
 
 /*************************************************INDICES****************************************************************************/
@@ -741,11 +742,8 @@ INSERT INTO [SQLITO].[detalle_importe_alquiler](alquiler, numero_periodo_inicio,
 		WHERE ALQUILER_CODIGO IS NOT NULL AND M.DETALLE_ALQ_NRO_PERIODO_FIN IS NOT NULL 
 		AND M.DETALLE_ALQ_NRO_PERIODO_INI IS NOT NULL AND DETALLE_ALQ_PRECIO IS NOT NULL;
 
-		
-	
 
-
-INSERT INTO [SQLITO].[pago_alquiler](numero_periodo, fecha_inicio_periodo, fecha_fin_periodo, codigo_pago, descripcion_periodo, alquiler, fecha_pago, importe, medio_pago)
+INSERT INTO [SQLITO].[pago_alquiler](numero_periodo, fecha_inicio_periodo, fecha_fin_periodo, codigo_pago, descripcion_periodo, alquiler, fecha_pago, importe, medio_pago, fecha_vencimiento)
 	SELECT DISTINCT
 		M.PAGO_ALQUILER_NRO_PERIODO,
 		M.PAGO_ALQUILER_FEC_INI,
@@ -755,7 +753,8 @@ INSERT INTO [SQLITO].[pago_alquiler](numero_periodo, fecha_inicio_periodo, fecha
 		A.alquiler_id,
 		M.PAGO_ALQUILER_FECHA,
 		M.PAGO_ALQUILER_IMPORTE,
-		MP.medio_pago_id
+		MP.medio_pago_id,
+		M.PAGO_ALQUILER_FECHA_VENCIMIENTO
 	FROM gd_esquema.Maestra M
 	JOIN alquiler AS A ON A.codigo_alquiler = M.ALQUILER_CODIGO 
 	JOIN medio_pago AS MP ON M.PAGO_ALQUILER_MEDIO_PAGO = MP.nombre

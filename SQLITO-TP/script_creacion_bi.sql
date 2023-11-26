@@ -171,19 +171,19 @@ GO
 --------------------------
 
 CREATE TABLE [SQLITO].BI_HECHOS_ANUNCIO(
-	BI_tiempo NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[BI_TIEMPO] ([BI_TIEMPO_ID]),
-	BI_tipo_operacion NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[BI_TIPO_OPERACION] ([BI_TIPO_OPERACION_ID]),
-	BI_barrio NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[BI_BARRIO] ([BI_BARRIO_ID]),
-	BI_ambientes NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[BI_AMBIENTES] ([BI_AMBIENTES_ID]),
-	BI_tipo_inmueble NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[BI_TIPO_INMUEBLE] ([BI_TIPO_INMUEBLE_ID]),
-	BI_rango_metros NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[BI_RANGO_METROS] ([BI_RANGO_METROS_ID]),
-	BI_tipo_moneda NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[BI_TIPO_MONEDA] ([BI_TIPO_MONEDA_ID]),
-	BI_agencia NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[BI_AGENCIA] ([BI_AGENCIA_ID]),
-	BI_rango_etario_empleado NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[BI_RANGO_ETARIO] ([BI_RANGO_ETARIO_ID]),
+	BI_hechos_anuncio_id NUMERIC(18,0) IDENTITY PRIMARY KEY,
+	BI_tiempo NUMERIC(18,0) FOREIGN KEY REFERENCES [SQLITO].[BI_TIEMPO] ([BI_TIEMPO_ID]),
+	BI_tipo_operacion NUMERIC(18,0) FOREIGN KEY REFERENCES [SQLITO].[BI_TIPO_OPERACION] ([BI_TIPO_OPERACION_ID]),
+	BI_barrio NUMERIC(18,0) FOREIGN KEY REFERENCES [SQLITO].[BI_BARRIO] ([BI_BARRIO_ID]),
+	BI_ambientes NUMERIC(18,0) FOREIGN KEY REFERENCES [SQLITO].[BI_AMBIENTES] ([BI_AMBIENTES_ID]),
+	BI_tipo_inmueble NUMERIC(18,0)FOREIGN KEY REFERENCES [SQLITO].[BI_TIPO_INMUEBLE] ([BI_TIPO_INMUEBLE_ID]),
+	BI_rango_metros NUMERIC(18,0) FOREIGN KEY REFERENCES [SQLITO].[BI_RANGO_METROS] ([BI_RANGO_METROS_ID]),
+	BI_tipo_moneda NUMERIC(18,0) FOREIGN KEY REFERENCES [SQLITO].[BI_TIPO_MONEDA] ([BI_TIPO_MONEDA_ID]),
+	BI_agencia NUMERIC(18,0) FOREIGN KEY REFERENCES [SQLITO].[BI_AGENCIA] ([BI_AGENCIA_ID]),
+	BI_rango_etario_empleado NUMERIC(18,0)  FOREIGN KEY REFERENCES [SQLITO].[BI_RANGO_ETARIO] ([BI_RANGO_ETARIO_ID]),
 	BI_anuncio_fecha_publicacion datetime,
 	BI_anuncio_fecha_finalizacion datetime,
 	BI_anuncio_precio_publicado numeric(18, 2)
-	PRIMARY KEY (BI_tiempo, BI_tipo_operacion, BI_barrio, BI_ambientes, BI_tipo_inmueble, BI_rango_metros, BI_tipo_moneda, BI_agencia, BI_rango_etario_empleado)
 );
 GO
 
@@ -444,84 +444,75 @@ GO
 CREATE PROCEDURE [SQLITO].BI_MIGRAR_HECHOS_ANUNCIOS
 AS
 BEGIN
-    INSERT INTO [SQLITO].BI_HECHOS_ANUNCIO (
-        BI_tiempo,
-        BI_tipo_operacion,
-        BI_barrio,
-        BI_ambientes,
-        BI_tipo_inmueble,
-        --BI_rango_metros,
-        -- BI_tipo_moneda,
-        --BI_agencia,
-        BI_rango_etario_empleado,
-        BI_anuncio_fecha_publicacion,
-        BI_anuncio_fecha_finalizacion,
-        BI_anuncio_precio_publicado
-    )
-    SELECT
-        t.BI_TIEMPO_ID,
-        tiop.BI_TIPO_OPERACION_ID,
-        (SELECT BI_BARRIO_ID 
-		FROM [SQLITO].BI_BARRIO b 
-		JOIN inmueble i ON i.barrio = b.BI_BARRIO_ID
-		WHERE a.inmueble = i.inmueble_id),
-        (SELECT BI_AMBIENTES_ID 
-		FROM [SQLITO].BI_AMBIENTES amb 
-		JOIN inmueble i ON i.tipo_ambiente = amb.BI_AMBIENTES_ID 
-		WHERE a.inmueble = i.inmueble_id),
-        (SELECT tin.BI_TIPO_INMUEBLE_ID 
-		FROM [SQLITO].BI_TIPO_INMUEBLE tin 
-		JOIN inmueble i ON i.tipo_inmueble = tin.BI_TIPO_INMUEBLE_ID 
-		WHERE i.inmueble_id = a.inmueble),
-        -- rm.BI_RANGO_METROS_ID,
-        -- tm.BI_TIPO_MONEDA_ID,
-        -- (SELECT ag.agencia_id 
-		-- FROM agencia s 
-		--JOIN agente_inmobiliario ag ON ag.agencia = s.agencia_id 
-		--WHERE a.agente = ag.agente_inmobiliario_id),
-        re.BI_RANGO_ETARIO_ID,
-        a.fecha_publicacion,
-        a.FECHA_FINALIZACION,
-        a.precio_publicado_inmueble
-    FROM
-        [SQLITO].anuncio a
-        JOIN [SQLITO].BI_TIEMPO t ON t.BI_TIEMPO_ANIO = DATEPART(YEAR, a.fecha_publicacion) AND t.BI_TIEMPO_MES = DATEPART(MONTH, a.fecha_publicacion) AND t.BI_TIEMPO_CUATRIMESTRE = DATEPART(QUARTER, a.fecha_publicacion)
-        JOIN [SQLITO].BI_TIPO_OPERACION tiop ON tiop.BI_TIPO_OPERACION_ID = a.tipo_operacion
-        JOIN [SQLITO].BI_RANGO_ETARIO re ON re.BI_RANGO_ETARIO_ID = [SQLITO].CALCULAR_RANGO_ETARIO_EMPLEADO(a.agente)
-        JOIN [SQLITO].BI_RANGO_METROS rm ON rm.BI_RANGO_METROS_ID = [SQLITO].CALCULAR_RANGO_METROS(a.inmueble)
-        JOIN [SQLITO].BI_TIPO_MONEDA tm ON tm.BI_TIPO_MONEDA_ID = a.moneda;
-END;
+INSERT INTO [SQLITO].BI_HECHOS_ANUNCIO(
+	BI_tiempo,
+	BI_tipo_operacion,
+	BI_barrio,
+	BI_ambientes,
+	BI_tipo_inmueble,
+	BI_rango_metros,
+	BI_tipo_moneda,
+	BI_agencia,
+	BI_rango_etario_empleado,
+	BI_anuncio_fecha_publicacion,
+	BI_anuncio_fecha_finalizacion,
+	BI_anuncio_precio_publicado
+)
+SELECT DISTINCT
+	t.BI_TIEMPO_ID, --ID TIEMPO
+	tiop.BI_TIPO_OPERACION_ID, --ID TIPO OPERACION
+	bb.BI_BARRIO_ID , --ID BARRIO
+	amb.BI_AMBIENTES_ID, --ID AMBIENTES
+	bti.BI_TIPO_INMUEBLE_ID, --TIPO INMUEBLES
+	rm.BI_RANGO_METROS_ID, --RANGO METROS
+	tm.BI_TIPO_MONEDA_ID, --TIPO MONEDA
+	bs.BI_AGENCIA_ID, --SUCURSALES
+	re.BI_RANGO_ETARIO_ID, --RANGO ETARIO EMPLEADO
+	a.fecha_publicacion,
+	a.fecha_finalizacion,
+	a.precio_publicado_inmueble
+FROM [SQLITO].anuncio a
+JOIN [SQLITO].inmueble i ON i.inmueble_id = a.inmueble
+JOIN [SQLITO].BI_BARRIO bb ON bb.BI_BARRIO_ID =  i.barrio
+JOIN [SQLITO].BI_AMBIENTES amb ON amb.BI_AMBIENTES_ID = i.tipo_ambiente
+JOIN [SQLITO].BI_TIPO_INMUEBLE bti ON bti.BI_TIPO_INMUEBLE_ID = i.tipo_inmueble
+JOIN [SQLITO].agente_inmobiliario ag ON ag.agente_inmobiliario_id = a.agente
+JOIN [SQLITO].BI_AGENCIA bs ON bs.BI_AGENCIA_ID = ag.agencia  
+JOIN [SQLITO].BI_TIEMPO t ON t.BI_TIEMPO_ANIO = DATEPART(YEAR,a.fecha_publicacion) AND t.BI_TIEMPO_MES = DATEPART(MONTH, a.fecha_publicacion) AND t.BI_TIEMPO_CUATRIMESTRE = DATEPART(QUARTER, a.fecha_publicacion)
+JOIN [SQLITO].BI_TIPO_OPERACION tiop ON tiop.BI_TIPO_OPERACION_ID = a.tipo_operacion
+JOIN [SQLITO].BI_RANGO_ETARIO re ON re.BI_RANGO_ETARIO_ID = [SQLITO].CALCULAR_RANGO_ETARIO_EMPLEADO(a.agente)
+JOIN [SQLITO].BI_RANGO_METROS rm ON rm.BI_RANGO_METROS_ID= [SQLITO].CALCULAR_RANGO_METROS(a.inmueble)
+JOIN [SQLITO].BI_TIPO_MONEDA tm ON tm.BI_TIPO_MONEDA_ID = a.moneda
+END
 GO
 
 CREATE PROCEDURE [SQLITO].BI_MIGRAR_HECHOS_ALQUILER
 AS
 BEGIN
-    INSERT INTO [SQLITO].BI_HECHOS_ALQUILER(
-        BI_rango_etario_inquilino,
-        BI_tiempo,
-        BI_barrio,
-        BI_pago_alq_fecha,
-        BI_pago_alq_fecha_vencimiento,
-        BI_pago_alq_importe,
-        BI_alq_comision
-    )
-    SELECT
-    re.BI_RANGO_ETARIO_ID, 
-    t.BI_TIEMPO_ID,
-    b.BI_BARRIO_ID,
-    pa.fecha_pago,
-    inq.fecha_nacimiento,  -- Corregido para obtener la fecha de nacimiento desde la tabla 'inquilino'
-    pa.importe,
-    a.COMISION 
-FROM
-    [SQLITO].alquiler a
-    JOIN [SQLITO].BI_RANGO_ETARIO re ON re.BI_RANGO_ETARIO_ID = [SQLITO].CALCULAR_RANGO_ETARIO_INQUILINO(a.INQUILINO)
-    JOIN [SQLITO].BI_TIEMPO t ON t.BI_TIEMPO_ANIO = DATEPART(YEAR, a.fecha_inicio) AND t.BI_TIEMPO_MES = DATEPART(MONTH, a.FECHA_INICIO) AND t.BI_TIEMPO_CUATRIMESTRE = DATEPART(QUARTER, a.FECHA_INICIO)
-    JOIN [SQLITO].BI_BARRIO b ON b.BI_BARRIO_ID = (SELECT BI_BARRIO_ID FROM [SQLITO].inmueble inm JOIN [SQLITO].anuncio an ON an.INMUEBLE = inm.inmueble_id WHERE a.anuncio = an.anuncio_id)
-    JOIN [SQLITO].pago_alquiler pa ON pa.alquiler = a.alquiler_id
-    JOIN [SQLITO].alquiler al ON al.alquiler_id = pa.alquiler
-    JOIN [SQLITO].inquilino inq ON inq.inquilino_id = al.inquilino;
-
+INSERT INTO [SQLITO].BI_HECHOS_ALQUILER(
+	BI_rango_etario_inquilino,
+	BI_tiempo,
+	BI_barrio,
+	BI_pago_alq_fecha,
+	BI_pago_alq_fecha_vencimiento,
+	BI_pago_alq_importe,
+	BI_alq_comision
+)
+SELECT DISTINCT
+	re.RANGO_ETARIO_CODIGO, --RANGO ETARIO INQUILINO	
+	t.TIEMPO_CODIGO, --TIEMPO
+	b.BARRIO_CODIGO, --BARRIO
+	ppa.PAGO_ALQUILER_FECHA, --PAGO ALQ FECHA
+	ppa.PAGO_ALQUILER_FECHA_VENCIMIENTO, --PAGO ALQ FECHA VENC
+	ppa.IMPORTE,-- PAGO ALQ IMPORTE
+	a.COMISION --ALQ COMISION
+FROM [SQLITO].alquiler a
+JOIN [SQLITO].anuncio anun ON anun.anuncio_id = a.anuncio
+JOIN [SQLITO].inmueble inmu ON inmu.inmueble_id = anun.inmueble
+JOIN [SQLITO].pago_alquiler ppa ON ppa.alquiler = a.alquiler_id
+JOIN [SQLITO].BI_RANGO_ETARIO re ON re.BI_RANGO_ETARIO_ID = [SQLITO].CALCULAR_RANGO_ETARIO_INQUILINO(a.inquilino)
+JOIN [SQLITO].BI_TIEMPO t ON t.BI_TIEMPO_ANIO = DATEPART(YEAR, a.fecha_inicio) AND t.BI_TIEMPO_MES = DATEPART(MONTH, a.fecha_inicio) AND t.BI_TIEMPO_CUATRIMESTRE = DATEPART(QUARTER, a.FECHA_INICIO)
+JOIN [SQLITO].BI_BARRIO b ON b.BI_BARRIO_ID = inmu.barrio
 END
 GO
 
@@ -533,14 +524,14 @@ BEGIN TRANSACTION
 	EXECUTE [SQLITO].BI_MIGRAR_TIPO_MONEDA
 	EXECUTE [SQLITO].BI_MIGRAR_TIPO_OPERACION
 	EXECUTE [SQLITO].BI_MIGRAR_AGENCIA
+	EXECUTE [SQLITO].BI_MIGRAR_PROVINCIA
 	EXECUTE [SQLITO].BI_MIGRAR_LOCALIDAD
 	EXECUTE [SQLITO].BI_MIGRAR_BARRIO
-	EXECUTE [SQLITO].BI_MIGRAR_PROVINCIA
 	EXECUTE [SQLITO].BI_MIGRAR_RANGO_ETARIO
 	EXECUTE [SQLITO].BI_MIGRAR_RANGO_METROS
 	EXECUTE [SQLITO].BI_MIGRAR_TIPO_INMUEBLE
-	--EXECUTE [SQLITO].BI_MIGRAR_HECHOS_ANUNCIOS
-	EXECUTE [SQLITO].BI_MIGRAR_HECHOS_ALQUILER
+	EXECUTE [SQLITO].BI_MIGRAR_HECHOS_ANUNCIOS
+	--EXECUTE [SQLITO].BI_MIGRAR_HECHOS_ALQUILER
 
 COMMIT;
 
