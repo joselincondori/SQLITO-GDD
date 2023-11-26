@@ -570,3 +570,194 @@ BEGIN TRANSACTION
 
 COMMIT;
 
+/*1*/
+GO
+CREATE VIEW [SQLITO].VW_DURACION_PROMEDIO_ANUNCIOS 
+AS
+SELECT
+    t.BI_TIEMPO_ANIO AS Anio,
+    t.BI_TIEMPO_CUATRIMESTRE AS Cuatrimestre,
+    tiop.BI_TIPO_OPERACION_DESCRIPCION AS TipoOperacion,
+    bb.BI_BARRIO_NOMBRE AS Barrio,
+    amb.BI_AMBIENTES_CANTIDAD AS Ambientes,
+    AVG(DATEDIFF(day, a.BI_anuncio_fecha_publicacion, a.BI_anuncio_fecha_finalizacion)) AS DuracionPromedio
+FROM [SQLITO].BI_HECHOS_ANUNCIO a
+JOIN [SQLITO].BI_TIEMPO t ON t.BI_TIEMPO_ID = a.BI_tiempo
+JOIN [SQLITO].BI_TIPO_OPERACION tiop ON tiop.BI_TIPO_OPERACION_ID = a.BI_tipo_operacion
+JOIN [SQLITO].BI_BARRIO bb ON bb.BI_BARRIO_ID = a.BI_barrio
+JOIN [SQLITO].BI_AMBIENTES amb ON amb.BI_AMBIENTES_ID = a.BI_ambientes
+GROUP BY
+    t.BI_TIEMPO_ANIO,
+    t.BI_TIEMPO_CUATRIMESTRE,
+    tiop.BI_TIPO_OPERACION_DESCRIPCION,
+    bb.BI_BARRIO_NOMBRE,
+    amb.BI_AMBIENTES_CANTIDAD;
+GO
+SELECT * FROM [SQLITO].VW_DURACION_PROMEDIO_ANUNCIOS;
+
+/*2*/
+GO
+CREATE VIEW [SQLITO].VW_PROMEDIO_PRECIO_INMUEBLES AS
+SELECT 
+    t.BI_TIEMPO_ANIO,
+    t.BI_TIEMPO_CUATRIMESTRE,
+    op.BI_TIPO_OPERACION_DESCRIPCION,
+    inm.BI_TIPO_INMUEBLE,
+    rm.BI_RANGO_METROS_DESCRIPCION,
+    tm.BI_TIPO_MONEDA,
+    AVG(ha.BI_anuncio_precio_publicado) AS Precio_Promedio
+FROM 
+    [SQLITO].BI_HECHOS_ANUNCIO ha
+INNER JOIN 
+    [SQLITO].BI_TIEMPO t ON ha.BI_tiempo = t.BI_TIEMPO_ID
+INNER JOIN 
+    [SQLITO].BI_TIPO_OPERACION op ON ha.BI_tipo_operacion = op.BI_TIPO_OPERACION_ID
+INNER JOIN 
+    [SQLITO].BI_TIPO_INMUEBLE inm ON ha.BI_tipo_inmueble = inm.BI_TIPO_INMUEBLE_ID
+INNER JOIN 
+    [SQLITO].BI_RANGO_METROS rm ON ha.BI_rango_metros = rm.BI_RANGO_METROS_ID
+INNER JOIN 
+    [SQLITO].BI_TIPO_MONEDA tm ON ha.BI_tipo_moneda = tm.BI_TIPO_MONEDA_ID
+GROUP BY 
+    t.BI_TIEMPO_ANIO,
+    t.BI_TIEMPO_CUATRIMESTRE,
+    op.BI_TIPO_OPERACION_DESCRIPCION,
+    inm.BI_TIPO_INMUEBLE,
+    rm.BI_RANGO_METROS_DESCRIPCION,
+    tm.BI_TIPO_MONEDA;
+GO
+SELECT * FROM [SQLITO].VW_PROMEDIO_PRECIO_INMUEBLES
+
+/*4*/
+GO
+CREATE VIEW [SQLITO].VW2_PORCENTAJE_INCUMPLIMIENTO_ALQUILER AS
+SELECT
+    T.BI_TIEMPO_ANIO AS Anio,
+    T.BI_TIEMPO_MES AS Mes,
+    COUNT(CASE WHEN A.BI_pago_alq_fecha > A.BI_pago_alq_fecha_vencimiento THEN 1 END) AS PagosIncumplidos,
+    COUNT(*) AS TotalPagos,
+    (COUNT(CASE WHEN A.BI_pago_alq_fecha > A.BI_pago_alq_fecha_vencimiento THEN 1 END) * 100.0) / COUNT(*) AS PorcentajeIncumplimiento
+FROM [SQLITO].BI_HECHOS_ALQUILER A
+INNER JOIN [SQLITO].BI_TIEMPO T ON T.BI_TIEMPO_ID = A.BI_tiempo
+GROUP BY
+    T.BI_TIEMPO_ANIO,
+    T.BI_TIEMPO_MES;
+GO
+
+/*5*/
+CREATE VIEW [SQLITO].VW3_PROMEDIO_INCREMENTO_ALQUILER AS
+WITH DatosAlquiler AS (
+    SELECT
+        ha.BI_hechos_alquiler_id,
+        t.BI_TIEMPO_ANIO,
+        t.BI_TIEMPO_MES,
+        ha.BI_pago_alq_importe,
+        LAG(ha.BI_pago_alq_importe) OVER (PARTITION BY ha.BI_hechos_alquiler_id ORDER BY t.BI_TIEMPO_ANIO DESC, t.BI_TIEMPO_MES DESC) AS Pago_Anterior
+    FROM
+        [SQLITO].BI_HECHOS_ALQUILER ha
+    INNER JOIN
+        [SQLITO].BI_TIEMPO t ON ha.BI_tiempo = t.BI_TIEMPO_ID
+)
+SELECT
+    BI_TIEMPO_ANIO,
+    BI_TIEMPO_MES,
+    AVG(CASE 
+            WHEN Pago_Anterior IS NOT NULL THEN (BI_pago_alq_importe - Pago_Anterior) / Pago_Anterior * 100
+            ELSE 0 
+        END) AS Porcentaje_Promedio_Incremento
+FROM
+    DatosAlquiler
+GROUP BY
+    BI_TIEMPO_ANIO,
+    BI_TIEMPO_MES;
+
+	SELECT * FROM [SQLITO].VW3_PROMEDIO_INCREMENTO_ALQUILER 
+
+/*6*/
+GO
+CREATE VIEW [SQLITO].VW_PRECIO_PROMEDIO_M2_VENTAS AS
+SELECT
+    t.BI_TIPO_INMUEBLE_ID AS TipoInmuebleID,
+    l.BI_LOCALIDAD_ID AS LocalidadID,
+    ti.BI_TIEMPO_ANIO AS Anio,
+    ti.BI_TIEMPO_CUATRIMESTRE AS Cuatrimestre,
+    AVG(v.BI_SUPERFICIE_TOTAL / v.BI_VENTA_PRECIO) AS PrecioPromedioM2
+FROM [SQLITO].BI_HECHOS_VENTA v
+JOIN [SQLITO].BI_TIPO_INMUEBLE t ON v.BI_tipo_inmueble = t.BI_TIPO_INMUEBLE_ID
+JOIN [SQLITO].BI_LOCALIDAD l ON v.BI_localidad = l.BI_LOCALIDAD_ID
+JOIN [SQLITO].BI_TIEMPO ti ON v.BI_tiempo = ti.BI_TIEMPO_ID
+GROUP BY
+    t.BI_TIPO_INMUEBLE_ID,
+    l.BI_LOCALIDAD_ID,
+    ti.BI_TIEMPO_ANIO,
+    ti.BI_TIEMPO_CUATRIMESTRE;
+GO
+SELECT * FROM [SQLITO].VW_PRECIO_PROMEDIO_M2_VENTAS
+
+/*7*/
+
+/*8*/
+GO
+CREATE VIEW [SQLITO].VW_PORCENTAJE_OPERACIONES_CONCRETADAS AS
+WITH AnunciosPorSucursalYEmpleado AS (
+    SELECT
+        a.BI_agencia,
+        a.BI_rango_etario_empleado,
+        t.BI_TIEMPO_ANIO,
+        COUNT(*) AS Total_Anuncios
+    FROM
+        [SQLITO].BI_HECHOS_ANUNCIO a
+    INNER JOIN
+        [SQLITO].BI_TIEMPO t ON a.BI_tiempo = t.BI_TIEMPO_ID
+    GROUP BY
+        a.BI_agencia,
+        a.BI_rango_etario_empleado,
+        t.BI_TIEMPO_ANIO
+),
+OperacionesConcretadas AS (
+    SELECT
+        a.BI_agencia,
+        a.BI_rango_etario_empleado,
+        t.BI_TIEMPO_ANIO,
+        COUNT(*) AS Total_Operaciones_Concretadas
+    FROM
+        [SQLITO].BI_HECHOS_ALQUILER al
+    INNER JOIN
+        [SQLITO].BI_HECHOS_ANUNCIO a ON al.BI_hechos_alquiler_id = a.BI_hechos_anuncio_id
+    INNER JOIN
+        [SQLITO].BI_TIEMPO t ON a.BI_tiempo = t.BI_TIEMPO_ID
+    GROUP BY
+        a.BI_agencia,
+        a.BI_rango_etario_empleado,
+        t.BI_TIEMPO_ANIO
+    UNION ALL
+    SELECT
+        a.BI_agencia,
+        a.BI_rango_etario_empleado,
+        t.BI_TIEMPO_ANIO,
+        COUNT(*) AS Total_Operaciones_Concretadas
+    FROM
+        [SQLITO].BI_HECHOS_VENTA v
+    INNER JOIN
+        [SQLITO].BI_HECHOS_ANUNCIO a ON v.BI_hechos_venta_id = a.BI_hechos_anuncio_id
+    INNER JOIN
+        [SQLITO].BI_TIEMPO t ON a.BI_tiempo = t.BI_TIEMPO_ID
+    GROUP BY
+        a.BI_agencia,
+        a.BI_rango_etario_empleado,
+        t.BI_TIEMPO_ANIO
+)
+SELECT
+    apse.BI_agencia,
+    apse.BI_rango_etario_empleado,
+    apse.BI_TIEMPO_ANIO,
+    COALESCE(oc.Total_Operaciones_Concretadas, 0) / CAST(apse.Total_Anuncios AS FLOAT) * 100 AS Porcentaje_Operaciones_Concretadas
+FROM
+    AnunciosPorSucursalYEmpleado apse
+LEFT JOIN
+    OperacionesConcretadas oc ON apse.BI_agencia = oc.BI_agencia
+                               AND apse.BI_rango_etario_empleado = oc.BI_rango_etario_empleado
+                               AND apse.BI_TIEMPO_ANIO = oc.BI_TIEMPO_ANIO;
+GO
+
+SELECT * FROM [SQLITO].VW_PORCENTAJE_OPERACIONES_CONCRETADAS
