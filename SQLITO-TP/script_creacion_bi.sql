@@ -1,9 +1,9 @@
 USE GD2C2023;
 GO
 
--- Eliminar vistas
-
--- Eliminar vistas si existen
+--------------------------
+--DROPEO VISTAS Y TABLAS--
+--------------------------
 
 IF EXISTS (SELECT * FROM sys.views WHERE object_id = OBJECT_ID('[SQLITO].VW_DURACION_PROMEDIO_ANUNCIOS'))
     DROP VIEW [SQLITO].VW_DURACION_PROMEDIO_ANUNCIOS;
@@ -42,7 +42,6 @@ IF EXISTS (SELECT * FROM sys.views WHERE object_id = OBJECT_ID('[SQLITO].VW_TOTA
 GO
 
 
--- Eliminar Procedimientos Almacenados
 IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'BI_MIGRAR_HECHOS_ANUNCIOS' AND schema_id = SCHEMA_ID('SQLITO'))
     DROP PROCEDURE [SQLITO].BI_MIGRAR_HECHOS_ANUNCIOS;
 IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'BI_MIGRAR_HECHOS_ALQUILER' AND schema_id = SCHEMA_ID('SQLITO'))
@@ -74,7 +73,6 @@ IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'BI_MIGRAR_RANG
 IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'BI_MIGRAR_TIPO_INMUEBLE' AND schema_id = SCHEMA_ID('SQLITO'))
     DROP PROCEDURE [SQLITO].BI_MIGRAR_TIPO_INMUEBLE;
 
--- Eliminar Funciones
 IF EXISTS (SELECT * FROM sys.objects WHERE type IN ('FN', 'IF', 'TF') AND name = 'CALCULAR_RANGO_ETARIO_EMPLEADO' AND schema_id = SCHEMA_ID('SQLITO'))
     DROP FUNCTION [SQLITO].CALCULAR_RANGO_ETARIO_EMPLEADO;
 GO
@@ -84,9 +82,6 @@ GO
 IF EXISTS (SELECT * FROM sys.objects WHERE type IN ('FN', 'IF', 'TF') AND name = 'CALCULAR_RANGO_METROS' AND schema_id = SCHEMA_ID('SQLITO'))
     DROP FUNCTION [SQLITO].CALCULAR_RANGO_METROS;
 GO
-
--- Eliminar Tablas
-
 
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'BI_HECHOS_ANUNCIO' AND schema_id = SCHEMA_ID('SQLITO'))
     DROP TABLE [SQLITO].BI_HECHOS_ANUNCIO;
@@ -123,21 +118,9 @@ IF EXISTS (SELECT * FROM sys.tables WHERE name = 'BI_RANGO_ETARIO' AND schema_id
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'BI_TIEMPO' AND schema_id = SCHEMA_ID('SQLITO'))
     DROP TABLE [SQLITO].BI_TIEMPO;
 
--- Eliminar Esquema
-/*IF EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'SQLITO')
-BEGIN
-    DROP SCHEMA SQLITO;
-END; */
-
 --------------------------
 --Creacion tablas--
 --------------------------
-
-/*IF NOT EXISTS (SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'SQLITO')
-BEGIN
-    EXEC('CREATE SCHEMA SQLITO')
-END
-GO */
 
 CREATE TABLE [SQLITO].BI_TIEMPO(
 	BI_TIEMPO_ID NUMERIC(18,0) IDENTITY(1, 1) PRIMARY KEY,
@@ -253,6 +236,10 @@ CREATE TABLE [SQLITO].BI_HECHOS_VENTA(
 	BI_venta_comision numeric(18, 2),
 );
 GO
+
+--------------------------
+--Creacion funciones--
+--------------------------
 
 CREATE FUNCTION [SQLITO].CALCULAR_RANGO_ETARIO_EMPLEADO(@EMPLEADO NUMERIC(18,0))
 RETURNS INT
@@ -502,15 +489,15 @@ INSERT INTO [SQLITO].BI_HECHOS_ANUNCIO(
 	BI_anuncio_precio_publicado
 )
 SELECT DISTINCT
-	t.BI_TIEMPO_ID, --ID TIEMPO
-	tiop.BI_TIPO_OPERACION_ID, --ID TIPO OPERACION
-	bb.BI_BARRIO_ID , --ID BARRIO
-	amb.BI_AMBIENTES_ID, --ID AMBIENTES
-	bti.BI_TIPO_INMUEBLE_ID, --TIPO INMUEBLES
-	rm.BI_RANGO_METROS_ID, --RANGO METROS
-	tm.BI_TIPO_MONEDA_ID, --TIPO MONEDA
-	bs.BI_AGENCIA_ID, --SUCURSALES
-	re.BI_RANGO_ETARIO_ID, --RANGO ETARIO EMPLEADO
+	t.BI_TIEMPO_ID,
+	tiop.BI_TIPO_OPERACION_ID, 
+	bb.BI_BARRIO_ID , 
+	amb.BI_AMBIENTES_ID, 
+	bti.BI_TIPO_INMUEBLE_ID, 
+	rm.BI_RANGO_METROS_ID, 
+	tm.BI_TIPO_MONEDA_ID, 
+	bs.BI_AGENCIA_ID, 
+	re.BI_RANGO_ETARIO_ID, 
 	a.fecha_publicacion,
 	a.fecha_finalizacion,
 	a.precio_publicado_inmueble
@@ -542,13 +529,13 @@ INSERT INTO [SQLITO].BI_HECHOS_ALQUILER(
     BI_alq_comision
 )
 SELECT DISTINCT
-    re.BI_RANGO_ETARIO_ID, --RANGO ETARIO INQUILINO
-    t.BI_TIEMPO_ID, --TIEMPO
-    b.BI_BARRIO_ID, --BARRIO
-    ppa.fecha_pago, --PAGO ALQ FECHA
-    ppa.fecha_vencimiento, --PAGO ALQ FECHA VENC
-    ppa.IMPORTE,-- PAGO ALQ IMPORTE
-    a.COMISION --ALQ COMISION
+    re.BI_RANGO_ETARIO_ID, 
+    t.BI_TIEMPO_ID, 
+    b.BI_BARRIO_ID, 
+    ppa.fecha_pago, 
+    ppa.fecha_vencimiento, 
+    ppa.IMPORTE,
+    a.COMISION 
 FROM [SQLITO].alquiler a
 JOIN [SQLITO].anuncio anun ON anun.anuncio_id = a.anuncio
 JOIN [SQLITO].inmueble inmu ON inmu.inmueble_id = anun.inmueble
@@ -572,13 +559,13 @@ INSERT INTO [SQLITO].BI_HECHOS_VENTA(
 	BI_venta_comision
 )
 SELECT DISTINCT
-	t.BI_TIEMPO_ID, --VENTA TIEMPO	
-	ti.BI_TIPO_INMUEBLE_ID, --TIPO INMUEBLE
-	l.BI_LOCALIDAD_ID, --LOCALIDAD
-	s.BI_AGENCIA_ID, --SUCURSAL
-	v.precio_venta, --VENTA PRECIO
-	i.supericie_total, --SUPERFICIE TOTAL
-	v.comision_inmobiliaria --COMISION
+	t.BI_TIEMPO_ID, 
+	ti.BI_TIPO_INMUEBLE_ID, 
+	l.BI_LOCALIDAD_ID, 
+	s.BI_AGENCIA_ID, 
+	v.precio_venta, 
+	i.supericie_total, 
+	v.comision_inmobiliaria 
 FROM [SQLITO].venta v
 JOIN [SQLITO].anuncio a ON a.anuncio_id = v.venta_id 
 JOIN [SQLITO].agente_inmobiliario agen ON agen.agente_inmobiliario_id = a.agente
@@ -590,7 +577,6 @@ JOIN [SQLITO].BI_TIEMPO t ON t.BI_TIEMPO_ANIO = DATEPART(YEAR,v.fecha_venta) AND
 JOIN [SQLITO].BI_AGENCIA s ON s.BI_AGENCIA_ID = agen.agencia
 END
 GO
-
 
 BEGIN TRANSACTION
 	EXECUTE [SQLITO].BI_MIGRAR_AMBIENTES
