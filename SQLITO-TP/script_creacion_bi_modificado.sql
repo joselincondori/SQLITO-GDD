@@ -1,6 +1,38 @@
 USE GD2C2023;
 GO
 
+
+IF EXISTS (SELECT * FROM sys.views WHERE object_id = OBJECT_ID('[SQLITO].VW_DURACION_PROMEDIO_ANUNCIOS'))
+    DROP VIEW [SQLITO].VW_DURACION_PROMEDIO_ANUNCIOS;
+GO
+
+IF EXISTS (SELECT * FROM sys.views WHERE object_id = OBJECT_ID('[SQLITO].VW_PROMEDIO_PRECIO_INMUEBLES'))
+    DROP VIEW [SQLITO].VW_PROMEDIO_PRECIO_INMUEBLES;
+GO
+
+IF EXISTS (SELECT * FROM sys.views WHERE object_id = OBJECT_ID('[SQLITO].[BI_VW_TOP_BARRIOS_POR_RANGO_ETARIO]'))
+    DROP VIEW [SQLITO].[BI_VW_TOP_BARRIOS_POR_RANGO_ETARIO];
+GO
+
+IF EXISTS (SELECT * FROM sys.views WHERE object_id = OBJECT_ID('[SQLITO].VW_TOTAL_CIERRE_CONTRATOS'))
+    DROP VIEW [SQLITO].VW_TOTAL_CIERRE_CONTRATOS;
+GO
+IF EXISTS (SELECT * FROM sys.views WHERE object_id = OBJECT_ID('[SQLITO].VW_PORCENTAJE_INCUMPLIMIENTO_ALQUILER'))
+    DROP VIEW [SQLITO].VW_PORCENTAJE_INCUMPLIMIENTO_ALQUILER;
+GO
+IF EXISTS (SELECT * FROM sys.views WHERE object_id = OBJECT_ID('[SQLITO].VW_PROMEDIO_INCREMENTO_ALQUILER'))
+    DROP VIEW [SQLITO].VW_PROMEDIO_INCREMENTO_ALQUILER;
+GO
+IF EXISTS (SELECT * FROM sys.views WHERE object_id = OBJECT_ID('[SQLITO].VW_PRECIO_PROMEDIO_M2_VENTAS'))
+    DROP VIEW [SQLITO].VW_PRECIO_PROMEDIO_M2_VENTAS;
+GO
+IF EXISTS (SELECT * FROM sys.views WHERE object_id = OBJECT_ID('[SQLITO].VW_PROMEDIO_COMISION_TIPO_OPERACION'))
+    DROP VIEW [SQLITO].VW_PROMEDIO_COMISION_TIPO_OPERACION;
+GO
+IF EXISTS (SELECT * FROM sys.views WHERE object_id = OBJECT_ID('[SQLITO].VW_PORCENTAJE_OPERACIONES_CONCRETADAS'))
+    DROP VIEW [SQLITO].VW_PORCENTAJE_OPERACIONES_CONCRETADAS;
+GO
+
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'BI_HECHOS_ANUNCIO' AND schema_id = SCHEMA_ID('SQLITO'))
     DROP TABLE [SQLITO].BI_HECHOS_ANUNCIO;
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'BI_HECHOS_ALQUILER' AND schema_id = SCHEMA_ID('SQLITO'))
@@ -37,6 +69,8 @@ IF EXISTS (SELECT * FROM sys.objects WHERE type IN ('FN', 'IF', 'TF') AND name =
     DROP FUNCTION [SQLITO].CALCULAR_CUATRIMESTRE;
 IF EXISTS (SELECT * FROM sys.objects WHERE type IN ('FN', 'IF', 'TF') AND name = 'CALCULAR_RANGO_ETARIO_COMPRADOR' AND schema_id = SCHEMA_ID('SQLITO'))
     DROP FUNCTION [SQLITO].CALCULAR_RANGO_ETARIO_COMPRADOR;
+IF EXISTS (SELECT * FROM sys.objects WHERE type IN ('FN', 'IF', 'TF') AND name = 'CALCULAR_RANGO_ETARIO' AND schema_id = SCHEMA_ID('SQLITO'))
+    DROP FUNCTION [SQLITO].CALCULAR_RANGO_ETARIO;
 IF EXISTS (SELECT * FROM sys.objects WHERE type IN ('FN', 'IF', 'TF') AND name = 'CALCULAR_RANGO_METROS' AND schema_id = SCHEMA_ID('SQLITO'))
     DROP FUNCTION [SQLITO].CALCULAR_RANGO_METROS;
 GO
@@ -96,13 +130,14 @@ GO
 
 CREATE TABLE [SQLITO].BI_RANGO_ETARIO(
 	BI_RANGO_ETARIO_ID NUMERIC(18,0) IDENTITY(1, 1) PRIMARY KEY,
-	BI_RANGO_ETARIO_RANGO nvarchar(10),
+	BI_RANGO_INICIO NUMERIC,
+	BI_RANGO_FIN NUMERIC,
 );
 GO
 
 CREATE TABLE [SQLITO].BI_TIPO_INMUEBLE(
 	BI_TIPO_INMUEBLE_ID NUMERIC(18,0) IDENTITY PRIMARY KEY,
-	BI_TIPO_INMUEBLE nvarchar(45)
+	BI_TIPO_INMUEBLE nvarchar(100)
 );
 GO
 
@@ -114,7 +149,8 @@ GO
 
 CREATE TABLE [SQLITO].BI_RANGO_METROS(
 	BI_RANGO_METROS_ID NUMERIC(18,0) IDENTITY(1, 1) PRIMARY KEY,
-	BI_RANGO_METROS_DESCRIPCION nvarchar(50)
+	BI_RANGO_METROS_INICIO NUMERIC,
+	BI_RANGO_METROS_FIN NUMERIC,
 );
 GO
 
@@ -131,7 +167,7 @@ CREATE TABLE [SQLITO].BI_TIPO_MONEDA(
 GO
 
 CREATE TABLE [SQLITO].BI_HECHOS_ANUNCIO(
-	BI_hechos_anuncio_id NUMERIC(18,0) IDENTITY PRIMARY KEY,
+	--BI_hechos_anuncio_id NUMERIC(18,0) IDENTITY PRIMARY KEY,
 	BI_tiempo NUMERIC(18,0) FOREIGN KEY REFERENCES [SQLITO].[BI_TIEMPO] ([BI_TIEMPO_ID]),							
 	BI_tipo_operacion NUMERIC(18,0) FOREIGN KEY REFERENCES [SQLITO].[BI_TIPO_OPERACION] ([BI_TIPO_OPERACION_ID]),	
 	BI_ubicacion NUMERIC(18,0) FOREIGN KEY REFERENCES [SQLITO].[BI_UBICACION] ([BI_UBICACION_ID]),					
@@ -147,11 +183,12 @@ CREATE TABLE [SQLITO].BI_HECHOS_ANUNCIO(
 	BI_cantidad_de_operaciones_concretadas NUMERIC(18,0),
 	BI_monto_total NUMERIC(18,2),
 	BI_promedio_comision NUMERIC(18,2)
+	CONSTRAINT PK_BI_hecho_anuncio PRIMARY KEY (BI_tiempo, BI_ubicacion, BI_agencia, bi_rango_etario_empleado, bi_tipo_inmueble, bi_ambientes, bi_rango_metros, bi_tipo_operacion, bi_tipo_moneda)
 );
 GO
 
 CREATE TABLE [SQLITO].BI_HECHOS_ALQUILER(
-	BI_hechos_alquiler_id NUMERIC(18,0) IDENTITY PRIMARY KEY,
+	--BI_hechos_alquiler_id NUMERIC(18,0) IDENTITY PRIMARY KEY,
 	BI_rango_etario_inquilino NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[BI_RANGO_ETARIO] ([BI_RANGO_ETARIO_ID]),
 	BI_rango_etario_empleado NUMERIC(18,0)  FOREIGN KEY REFERENCES [SQLITO].[BI_RANGO_ETARIO] ([BI_RANGO_ETARIO_ID]),
 	BI_tiempo NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[BI_TIEMPO] ([BI_TIEMPO_ID]),
@@ -164,11 +201,12 @@ CREATE TABLE [SQLITO].BI_HECHOS_ALQUILER(
 	BI_cantidad_alquileres NUMERIC(18,0),
 	BI_porcentaje_incumplimiento_pagos NUMERIC(18,2),
 	BI_cantidad_de_pagos NUMERIC(18,0)
+	 CONSTRAINT PK_BI_hecho_alquiler PRIMARY KEY (bi_tiempo, bi_ubicacion, bi_agencia, bi_rango_etario_inquilino, bi_rango_etario_empleado, bi_tipo_inmueble, bi_ambientes, bi_rango_metros, bi_tipo_moneda)
 );
 GO
 
 CREATE TABLE [SQLITO].BI_HECHOS_VENTA(
-	BI_hechos_venta_id NUMERIC(18,0) IDENTITY PRIMARY KEY,
+	--BI_hechos_venta_id NUMERIC(18,0) IDENTITY PRIMARY KEY,
 	BI_tiempo NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[BI_TIEMPO] ([BI_TIEMPO_ID]),
 	BI_rango_etario_compradores NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[BI_RANGO_ETARIO] ([BI_RANGO_ETARIO_ID]),
 	BI_rango_etario_empleado NUMERIC(18,0)  FOREIGN KEY REFERENCES [SQLITO].[BI_RANGO_ETARIO] ([BI_RANGO_ETARIO_ID]),
@@ -180,90 +218,116 @@ CREATE TABLE [SQLITO].BI_HECHOS_VENTA(
 	BI_rango_metros NUMERIC(18,0) FOREIGN KEY REFERENCES [SQLITO].[BI_RANGO_METROS] ([BI_RANGO_METROS_ID]),
 	BI_cantidad_de_ventas numeric(18,0),
 	BI_precio_promedio_X_metro_cuadrado numeric(18, 2)
+	CONSTRAINT PK_BI_hecho_venta PRIMARY KEY (bi_tiempo, bi_ubicacion, bi_agencia, bi_rango_etario_empleado, bi_rango_etario_compradores, bi_tipo_inmueble, bi_ambientes, bi_rango_metros, bi_tipo_moneda)
 );
 GO
 
 CREATE TABLE [SQLITO].BI_HECHOS_PAGO_ALQUILER(
-	BI_hechos_pago_id NUMERIC(18,0) IDENTITY PRIMARY KEY,
+	--BI_hechos_pago_id NUMERIC(18,0) IDENTITY PRIMARY KEY,
 	BI_tiempo NUMERIC(18,0) NOT NULL FOREIGN KEY REFERENCES [SQLITO].[BI_TIEMPO] ([BI_TIEMPO_ID]),
 	BI_cantidad_de_pagos numeric(18,0),
 	BI_promedio_aumento numeric(18, 2)
+	CONSTRAINT PK_BI_hecho_pago_alquiler PRIMARY KEY (bi_tiempo)
 );
 GO
 
 -- FUNCIONES
 
-CREATE FUNCTION [SQLITO].CALCULAR_RANGO_ETARIO_EMPLEADO(@EMPLEADO NUMERIC(18,0))
+CREATE FUNCTION [SQLITO].CALCULAR_RANGO_ETARIO (@fechaNacimiento DATE)
 RETURNS INT
+AS
 BEGIN
-	DECLARE @FECHA_NACIMIENTO SMALLDATETIME
-	DECLARE @EDAD INT
-	DECLARE @ID_RANGO_ETARIO_EMPLEADO INT
-	SET @FECHA_NACIMIENTO = (SELECT fecha_nacimiento
-							FROM [SQLITO].agente_inmobiliario
-							WHERE agente_inmobiliario_id = @EMPLEADO)
-	SET @EDAD = YEAR(GETDATE()) - YEAR(@FECHA_NACIMIENTO)
+    DECLARE @edad INT
+    DECLARE @rangoEtarioID INT
 
-	IF @EDAD < 25
-		SET @ID_RANGO_ETARIO_EMPLEADO = 1
-	ELSE IF @EDAD BETWEEN  25 AND 35
-		SET @ID_RANGO_ETARIO_EMPLEADO = 2
-	ELSE IF @EDAD BETWEEN 35 AND 50
-		SET @ID_RANGO_ETARIO_EMPLEADO = 3
-	ELSE IF @EDAD > 50
-		SET @ID_RANGO_ETARIO_EMPLEADO = 4
+    
+    SET @edad = DATEDIFF(YEAR, @fechaNacimiento, GETDATE())
 
-RETURN @ID_RANGO_ETARIO_EMPLEADO
-END
+    
+    IF @edad <= 25
+        SET @rangoEtarioID = 1;
+    ELSE IF @edad <= 35
+        SET @rangoEtarioID = 2;
+    ELSE IF @edad <= 50
+        SET @rangoEtarioID = 3;
+    ELSE
+        SET @rangoEtarioID = 4;
+
+    RETURN @rangoEtarioID;
+END;
 GO
 
-CREATE FUNCTION [SQLITO].CALCULAR_RANGO_ETARIO_COMPRADOR(@COMPRADOR NUMERIC(18,0))
-RETURNS INT
-BEGIN
-	DECLARE @FECHA_NACIMIENTO SMALLDATETIME
-	DECLARE @EDAD INT
-	DECLARE @ID_RANGO_ETARIO_COMPRADOR INT
-	SET @FECHA_NACIMIENTO = (SELECT fecha_nacimiento
-							FROM [SQLITO].comprador
-							WHERE comprador_id = @COMPRADOR)
-	SET @EDAD = YEAR(GETDATE()) - YEAR(@FECHA_NACIMIENTO)
-
-	IF @EDAD < 25
-		SET @ID_RANGO_ETARIO_COMPRADOR = 1
-	ELSE IF @EDAD BETWEEN  25 AND 35
-		SET @ID_RANGO_ETARIO_COMPRADOR = 2
-	ELSE IF @EDAD BETWEEN 35 AND 50
-		SET @ID_RANGO_ETARIO_COMPRADOR = 3
-	ELSE IF @EDAD > 50
-		SET @ID_RANGO_ETARIO_COMPRADOR = 4
-
-RETURN @ID_RANGO_ETARIO_COMPRADOR
-END
-GO
-
-CREATE FUNCTION [SQLITO].CALCULAR_RANGO_ETARIO_INQUILINO(@INQUILINO NUMERIC(18,0))
-RETURNS INT
-BEGIN
-	DECLARE @FECHA_NACIMIENTO SMALLDATETIME
-	DECLARE @EDAD INT
-	DECLARE @ID_RANGO_ETARIO_INQUILINO INT
-	SET @FECHA_NACIMIENTO = (SELECT fecha_nacimiento
-							FROM [SQLITO].inquilino
-							WHERE inquilino_id = @INQUILINO)
-	SET @EDAD = YEAR(GETDATE()) - YEAR(@FECHA_NACIMIENTO)
-
-	IF @EDAD < 25
-		SET @ID_RANGO_ETARIO_INQUILINO = 1
-	ELSE IF @EDAD BETWEEN  25 AND 35
-		SET @ID_RANGO_ETARIO_INQUILINO = 2
-	ELSE IF @EDAD BETWEEN 35 AND 50
-		SET @ID_RANGO_ETARIO_INQUILINO = 3
-	ELSE IF @EDAD > 50
-		SET @ID_RANGO_ETARIO_INQUILINO = 4
-
-RETURN @ID_RANGO_ETARIO_INQUILINO
-END
-GO
+--CREATE FUNCTION [SQLITO].CALCULAR_RANGO_ETARIO_EMPLEADO(@EMPLEADO NUMERIC(18,0))
+--RETURNS INT
+--BEGIN
+--	DECLARE @FECHA_NACIMIENTO SMALLDATETIME
+--	DECLARE @EDAD INT
+--	DECLARE @ID_RANGO_ETARIO_EMPLEADO INT
+--	SET @FECHA_NACIMIENTO = (SELECT fecha_nacimiento
+--							FROM [SQLITO].agente_inmobiliario
+--							WHERE agente_inmobiliario_id = @EMPLEADO)
+--	SET @EDAD = YEAR(GETDATE()) - YEAR(@FECHA_NACIMIENTO)
+--
+--	IF @EDAD < 25
+--		SET @ID_RANGO_ETARIO_EMPLEADO = 1
+--	ELSE IF @EDAD BETWEEN  25 AND 35
+--		SET @ID_RANGO_ETARIO_EMPLEADO = 2
+--	ELSE IF @EDAD BETWEEN 35 AND 50
+--		SET @ID_RANGO_ETARIO_EMPLEADO = 3
+--	ELSE IF @EDAD > 50
+--		SET @ID_RANGO_ETARIO_EMPLEADO = 4
+--
+--RETURN @ID_RANGO_ETARIO_EMPLEADO
+--END
+--GO
+--
+--CREATE FUNCTION [SQLITO].CALCULAR_RANGO_ETARIO_COMPRADOR(@COMPRADOR NUMERIC(18,0))
+--RETURNS INT
+--BEGIN
+--	DECLARE @FECHA_NACIMIENTO SMALLDATETIME
+--	DECLARE @EDAD INT
+--	DECLARE @ID_RANGO_ETARIO_COMPRADOR INT
+--	SET @FECHA_NACIMIENTO = (SELECT fecha_nacimiento
+--							FROM [SQLITO].comprador
+--							WHERE comprador_id = @COMPRADOR)
+--	SET @EDAD = YEAR(GETDATE()) - YEAR(@FECHA_NACIMIENTO)
+--
+--	IF @EDAD < 25
+--		SET @ID_RANGO_ETARIO_COMPRADOR = 1
+--	ELSE IF @EDAD BETWEEN  25 AND 35
+--		SET @ID_RANGO_ETARIO_COMPRADOR = 2
+--	ELSE IF @EDAD BETWEEN 35 AND 50
+--		SET @ID_RANGO_ETARIO_COMPRADOR = 3
+--	ELSE IF @EDAD > 50
+--		SET @ID_RANGO_ETARIO_COMPRADOR = 4
+--
+--RETURN @ID_RANGO_ETARIO_COMPRADOR
+--END
+--GO
+--
+--CREATE FUNCTION [SQLITO].CALCULAR_RANGO_ETARIO_INQUILINO(@INQUILINO NUMERIC(18,0))
+--RETURNS INT
+--BEGIN
+--	DECLARE @FECHA_NACIMIENTO SMALLDATETIME
+--	DECLARE @EDAD INT
+--	DECLARE @ID_RANGO_ETARIO_INQUILINO INT
+--	SET @FECHA_NACIMIENTO = (SELECT fecha_nacimiento
+--							FROM [SQLITO].inquilino
+--							WHERE inquilino_id = @INQUILINO)
+--	SET @EDAD = YEAR(GETDATE()) - YEAR(@FECHA_NACIMIENTO)
+--
+--	IF @EDAD < 25
+--		SET @ID_RANGO_ETARIO_INQUILINO = 1
+--	ELSE IF @EDAD BETWEEN  25 AND 35
+--		SET @ID_RANGO_ETARIO_INQUILINO = 2
+--	ELSE IF @EDAD BETWEEN 35 AND 50
+--		SET @ID_RANGO_ETARIO_INQUILINO = 3
+--	ELSE IF @EDAD > 50
+--		SET @ID_RANGO_ETARIO_INQUILINO = 4
+--
+--RETURN @ID_RANGO_ETARIO_INQUILINO
+--END
+--GO
 
 CREATE FUNCTION [SQLITO].CALCULAR_CUATRIMESTRE
 (
@@ -289,30 +353,46 @@ BEGIN
 END
 GO
 
-CREATE FUNCTION [SQLITO].CALCULAR_RANGO_METROS(@INMUEBLE NUMERIC(18,0))
+--CREATE FUNCTION [SQLITO].CALCULAR_RANGO_METROS(@INMUEBLE NUMERIC(18,0))
+--RETURNS INT
+--BEGIN
+--	DECLARE @SUPERFICIE numeric(18, 2)
+--	DECLARE @ID_RANGO_METROS INT
+--
+--	SET @SUPERFICIE = (SELECT i.supericie_total
+--					   FROM [SQLITO].inmueble i
+--					   WHERE i.inmueble_id = @INMUEBLE)
+--
+--	IF @SUPERFICIE < 35
+--		SET @ID_RANGO_METROS = 1
+--	ELSE IF @SUPERFICIE BETWEEN 35 AND 55
+--		SET @ID_RANGO_METROS = 2
+--	ELSE IF @SUPERFICIE BETWEEN 55 AND 75
+--		SET @ID_RANGO_METROS = 3
+--	ELSE IF @SUPERFICIE BETWEEN 75 AND 100
+--		SET @ID_RANGO_METROS = 4
+--	ELSE IF @SUPERFICIE > 100
+--		SET @ID_RANGO_METROS = 5
+--
+--RETURN @ID_RANGO_METROS
+--END
+--GO
+
+CREATE FUNCTION [SQLITO].CALCULAR_RANGO_METROS (@metrosCuadrados NUMERIC)
 RETURNS INT
+AS
 BEGIN
-	DECLARE @SUPERFICIE numeric(18, 2)
-	DECLARE @ID_RANGO_METROS INT
+    DECLARE @rangoM2ID INT
 
-	SET @SUPERFICIE = (SELECT i.supericie_total
-					   FROM [SQLITO].inmueble i
-					   WHERE i.inmueble_id = @INMUEBLE)
+   
+    SELECT @rangoM2ID = id_rango_m2
+    FROM ANDY_Y_SUS_SEMINARAS.BI_dim_rango_m2
+    WHERE @metrosCuadrados >= rango_inicio AND @metrosCuadrados <= rango_fin;
 
-	IF @SUPERFICIE < 35
-		SET @ID_RANGO_METROS = 1
-	ELSE IF @SUPERFICIE BETWEEN 35 AND 55
-		SET @ID_RANGO_METROS = 2
-	ELSE IF @SUPERFICIE BETWEEN 55 AND 75
-		SET @ID_RANGO_METROS = 3
-	ELSE IF @SUPERFICIE BETWEEN 75 AND 100
-		SET @ID_RANGO_METROS = 4
-	ELSE IF @SUPERFICIE > 100
-		SET @ID_RANGO_METROS = 5
-
-RETURN @ID_RANGO_METROS
-END
+    RETURN @rangoM2ID;
+END;
 GO
+
 
 CREATE FUNCTION [SQLITO].OBTENER_TIEMPO(@fecha DATETIME)
 RETURNS INT
@@ -416,31 +496,28 @@ GO
 
 CREATE PROCEDURE [SQLITO].BI_MIGRAR_RANGO_ETARIO
 AS
-BEGIN
-	INSERT INTO BI_RANGO_ETARIO(BI_RANGO_ETARIO_RANGO)
-		VALUES('<25')
-	INSERT INTO BI_RANGO_ETARIO(BI_RANGO_ETARIO_RANGO)
-		VALUES('25-35')
-	INSERT INTO BI_RANGO_ETARIO(BI_RANGO_ETARIO_RANGO)
-		VALUES('35-50')
-	INSERT INTO BI_RANGO_ETARIO(BI_RANGO_ETARIO_RANGO)
-		VALUES('>50')
+BEGIN 
+    INSERT INTO [SQLITO].BI_RANGO_ETARIO(BI_RANGO_INICIO, BI_RANGO_FIN)
+    VALUES (0, 25);
+    INSERT INTO [SQLITO].BI_RANGO_ETARIO(BI_RANGO_INICIO, BI_RANGO_FIN)
+    VALUES (25, 35);
+    INSERT INTO [SQLITO].BI_RANGO_ETARIO(BI_RANGO_INICIO, BI_RANGO_FIN)
+    VALUES (35, 50);
+    INSERT INTO [SQLITO].BI_RANGO_ETARIO(BI_RANGO_INICIO, BI_RANGO_FIN)
+    VALUES (50, 100);
 END
 GO
 
 CREATE PROCEDURE [SQLITO].BI_MIGRAR_RANGO_METROS
 AS
 BEGIN
-	INSERT INTO BI_RANGO_METROS(BI_RANGO_METROS_DESCRIPCION)
-		VALUES('<35')
-	INSERT INTO BI_RANGO_METROS(BI_RANGO_METROS_DESCRIPCION)
-		VALUES('<35-55')
-	INSERT INTO BI_RANGO_METROS(BI_RANGO_METROS_DESCRIPCION)
-		VALUES('55-75')
-	INSERT INTO BI_RANGO_METROS(BI_RANGO_METROS_DESCRIPCION)
-		VALUES('75-100')
-	INSERT INTO BI_RANGO_METROS(BI_RANGO_METROS_DESCRIPCION)
-		VALUES('>100')			
+    INSERT INTO [SQLITO].BI_RANGO_METROS(BI_RANGO_METROS_INICIO, BI_RANGO_METROS_FIN)
+    VALUES 
+        (0, 35),
+        (35, 55),
+        (55, 75),
+        (75, 100),
+        (100, 100000);
 END
 GO
 
@@ -462,10 +539,10 @@ BEGIN
     [SQLITO].OBTENER_TIEMPO(a.fecha_publicacion),
     u.BI_UBICACION_ID,
     agenciacita.BI_AGENCIA_ID,
-    [SQLITO].CALCULAR_RANGO_ETARIO_EMPLEADO(ag.agente_inmobiliario_id),
+    [SQLITO].CALCULAR_RANGO_ETARIO(ag.fecha_nacimiento),
     tipoInm.BI_TIPO_INMUEBLE_ID,
     inmueble.tipo_ambiente,
-    [SQLITO].CALCULAR_RANGO_METROS(inmueble),
+    [SQLITO].CALCULAR_RANGO_METROS(inmueble.supericie_total),
     tipoOp.BI_TIPO_OPERACION_ID,
     tipoMoneda.BI_TIPO_MONEDA_ID,
     AVG(DATEDIFF(DAY, a.fecha_publicacion, a.fecha_finalizacion)) AS promedioTiempoPublicado,
@@ -473,7 +550,7 @@ BEGIN
     COUNT(DISTINCT a.anuncio_id) AS cantAnuncios,
     SUM(CASE WHEN alq.alquiler_id IS NOT NULL OR v.venta_id IS NOT NULL THEN 1 ELSE 0 END) AS cantOperacionesConcretadas,
     SUM(CASE WHEN alq.alquiler_id IS NOT NULL OR v.venta_id IS NOT NULL THEN a.precio_publicado_inmueble ELSE 0 END) AS montoTotalOperacionesConcretadas,
-    AVG(CASE WHEN tipoOp.BI_TIPO_OPERACION_DESCRIPCION = 'Tipo Operaci�n Alquiler Contrato'  OR tipoOp.BI_TIPO_OPERACION_DESCRIPCION = 'Tipo Operaci�n Alquiler Temporario' THEN alq.comision WHEN tipoOp.BI_TIPO_OPERACION_DESCRIPCION = 'Tipo Operaci�n Venta' THEN v.comision_inmobiliaria ELSE 0 END) AS promedioComision
+    AVG(CASE WHEN tipoOp.BI_TIPO_OPERACION_DESCRIPCION = 'Tipo Operacion Alquiler Contrato'  OR tipoOp.BI_TIPO_OPERACION_DESCRIPCION = 'Tipo Operacion Alquiler Temporario' THEN alq.comision WHEN tipoOp.BI_TIPO_OPERACION_DESCRIPCION = 'Tipo Operacion Venta' THEN v.comision_inmobiliaria ELSE 0 END) AS promedioComision
     FROM [SQLITO].anuncio a
     JOIN [SQLITO].Inmueble inmueble ON a.inmueble = inmueble.inmueble_id
     JOIN [SQLITO].agente_inmobiliario ag ON ag.agente_inmobiliario_id = a.agente
@@ -495,10 +572,10 @@ BEGIN
         [SQLITO].OBTENER_TIEMPO(a.fecha_publicacion),
         u.BI_UBICACION_ID,
         agenciacita.BI_AGENCIA_ID,
-        [SQLITO].CALCULAR_RANGO_ETARIO_EMPLEADO(ag.agente_inmobiliario_id),
+		[SQLITO].CALCULAR_RANGO_ETARIO(ag.fecha_nacimiento),
         tipoInm.BI_TIPO_INMUEBLE_ID,
         inmueble.tipo_ambiente,
-        [SQLITO].CALCULAR_RANGO_METROS(inmueble),
+        [SQLITO].CALCULAR_RANGO_METROS(inmueble.supericie_total),
         tipoOp.BI_TIPO_OPERACION_ID,
         tipoMoneda.BI_TIPO_MONEDA_ID;
 END
@@ -512,11 +589,11 @@ BEGIN
         [SQLITO].OBTENER_TIEMPO(a.fecha_inicio),
         u.BI_UBICACION_ID,
         s.agencia_id,
-        [SQLITO].CALCULAR_RANGO_ETARIO_INQUILINO(inquilino.inquilino_id),
-        [SQLITO].CALCULAR_RANGO_ETARIO_EMPLEADO(ag.agente_inmobiliario_id),
+        [SQLITO].CALCULAR_RANGO_ETARIO(inquilino.fecha_nacimiento),
+        [SQLITO].CALCULAR_RANGO_ETARIO(ag.fecha_nacimiento),
         tipoInm.BI_TIPO_INMUEBLE_ID,
         inmueble.tipo_ambiente,
-        [SQLITO].CALCULAR_RANGO_METROS(inmueble),
+        [SQLITO].CALCULAR_RANGO_METROS(inmueble.supericie_total),
         tipoMoneda.BI_TIPO_MONEDA_ID,
         COUNT(DISTINCT a.alquiler_id) AS BI_cantAlquileres,
         SUM(CASE WHEN (DATEDIFF(DAY, pa.fecha_pago, pa.fecha_vencimiento) > 0) THEN 1 ELSE 0 END) / COUNT(*) * 100 AS BI_porcentajeIncumplimientoPagos,
@@ -541,15 +618,15 @@ BEGIN
         [SQLITO].OBTENER_TIEMPO(a.fecha_inicio),
         u.BI_UBICACION_ID,
         s.agencia_id,
-        [SQLITO].CALCULAR_RANGO_ETARIO_INQUILINO(inquilino.inquilino_id),
-        [SQLITO].CALCULAR_RANGO_ETARIO_EMPLEADO(ag.agente_inmobiliario_id),
+        [SQLITO].CALCULAR_RANGO_ETARIO(inquilino.fecha_nacimiento),
+        [SQLITO].CALCULAR_RANGO_ETARIO(ag.fecha_nacimiento),
         tipoInm.BI_TIPO_INMUEBLE_ID,
         inmueble.tipo_ambiente,
-        [SQLITO].CALCULAR_RANGO_METROS(inmueble),
+        [SQLITO].CALCULAR_RANGO_METROS(inmueble.supericie_total),
         tipoMoneda.BI_TIPO_MONEDA_ID
 END
 GO
-
+			 
 CREATE PROCEDURE [SQLITO].BI_MIGRAR_HECHO_PAGO_ALQUILER
 AS
 BEGIN
@@ -580,8 +657,8 @@ BEGIN
         [SQLITO].OBTENER_TIEMPO(v.fecha_venta),
         u.BI_UBICACION_ID,
         s.agencia_id,
-        [SQLITO].CALCULAR_RANGO_ETARIO_EMPLEADO(ag.agente_inmobiliario_id),
-        [SQLITO].CALCULAR_RANGO_ETARIO_COMPRADOR(comprador.comprador_id),
+        [SQLITO].CALCULAR_RANGO_ETARIO(ag.fecha_nacimiento),
+        [SQLITO].CALCULAR_RANGO_ETARIO(comprador.fecha_nacimiento),
         tipoInm.BI_TIPO_INMUEBLE_ID,
         inmueble.tipo_ambiente,
         [SQLITO].CALCULAR_RANGO_METROS(inmueble.supericie_total),
@@ -608,8 +685,8 @@ BEGIN
         [SQLITO].Obtener_Tiempo(v.fecha_venta),
         u.BI_UBICACION_ID,      
         s.agencia_id,
-        [SQLITO].CALCULAR_RANGO_ETARIO_EMPLEADO(ag.agente_inmobiliario_id),
-        [SQLITO].CALCULAR_RANGO_ETARIO_COMPRADOR(comprador.comprador_id),
+        [SQLITO].CALCULAR_RANGO_ETARIO(ag.fecha_nacimiento),
+        [SQLITO].CALCULAR_RANGO_ETARIO(comprador.fecha_nacimiento),
         tipoInm.BI_TIPO_INMUEBLE_ID,
 		inmueble.tipo_ambiente,
         [SQLITO].CALCULAR_RANGO_METROS(inmueble.supericie_total),
@@ -619,269 +696,282 @@ GO
 
 
 BEGIN TRANSACTION
-	EXECUTE [SQLITO].BI_MIGRAR_AMBIENTES
-	EXECUTE [SQLITO].BI_MIGRAR_TIEMPO
-	EXECUTE [SQLITO].BI_MIGRAR_TIPO_MONEDA
-	EXECUTE [SQLITO].BI_MIGRAR_TIPO_OPERACION
-	EXECUTE [SQLITO].BI_MIGRAR_AGENCIA
-	EXECUTE [SQLITO].BI_MIGRAR_UBICACION
+EXECUTE [SQLITO].BI_MIGRAR_AGENCIA
+EXECUTE [SQLITO].BI_MIGRAR_TIEMPO
 	EXECUTE [SQLITO].BI_MIGRAR_RANGO_ETARIO
-	EXECUTE [SQLITO].BI_MIGRAR_RANGO_METROS
-	EXECUTE [SQLITO].BI_MIGRAR_TIPO_INMUEBLE
+		EXECUTE [SQLITO].BI_MIGRAR_RANGO_METROS
+			EXECUTE [SQLITO].BI_MIGRAR_TIPO_MONEDA
+				EXECUTE [SQLITO].BI_MIGRAR_TIPO_OPERACION
+					EXECUTE [SQLITO].BI_MIGRAR_TIPO_INMUEBLE
+	EXECUTE [SQLITO].BI_MIGRAR_AMBIENTES
+	
+
+
+	
+	EXECUTE [SQLITO].BI_MIGRAR_UBICACION
+
+commit;
+begin transaction
+
 	EXECUTE [SQLITO].BI_MIGRAR_HECHO_ANUNCIO
 	EXECUTE [SQLITO].BI_MIGRAR_HECHO_ALQUILER
+		EXECUTE [SQLITO].BI_MIGRAR_HECHO_VENTA
 	EXECUTE [SQLITO].BI_MIGRAR_HECHO_PAGO_ALQUILER
-	EXECUTE [SQLITO].BI_MIGRAR_HECHO_VENTA
+
 
 COMMIT;
 
 
-SELECT COUNT(*) AS TotalRegistros
-FROM [SQLITO].BI_HECHOS_ANUNCIO;
 
-SELECT COUNT(*) AS TotalRegistros
-FROM [SQLITO].BI_HECHOS_VENTA;
+select count(*) from [SQLITO].BI_TIEMPO
+select count(*) from [SQLITO].BI_UBICACION
+select count(*) from [SQLITO].BI_AGENCIA
+select count(*) from [SQLITO].BI_RANGO_ETARIO
+select count(*) from [SQLITO].BI_TIPO_INMUEBLE
+select count(*) from [SQLITO].BI_AMBIENTES
+select count(*) from [SQLITO].BI_RANGO_METROS
+select count(*) from [SQLITO].BI_TIPO_OPERACION
+select count(*) from [SQLITO].BI_TIPO_MONEDA
+select count(*) from [SQLITO].BI_HECHOS_ANUNCIO
+select count(*) from [SQLITO].BI_HECHOS_ALQUILER
+select count(*) from [SQLITO].BI_HECHOS_VENTA
+select count(*) from [SQLITO].BI_HECHOS_PAGO_ALQUILER
 
-SELECT COUNT(*) AS TotalRegistros
-FROM [SQLITO].BI_HECHOS_ALQUILER;
-
-SELECT COUNT(*) AS TotalRegistros
-FROM [SQLITO].BI_HECHOS_PAGO_ALQUILER;
 
 
-SELECT COUNT(*) FROM [SQLITO].Alquiler
-SELECT COUNT(*) FROM [SQLITO].Anuncio 
-SELECT COUNT(*) FROM [SQLITO].Inmueble 
-SELECT COUNT(*) FROM [SQLITO].agente_inmobiliariO
-SELECT COUNT(*) FROM [SQLITO].agencia
-SELECT COUNT(*) FROM [SQLITO].moneda 
-SELECT COUNT(*) FROM [SQLITO].BI_TIPO_MONEDA 
-SELECT COUNT(*) FROM [SQLITO].Inquilino 
-SELECT COUNT(*) FROM [SQLITO].tipo_inmueble 
-SELECT COUNT(*) FROM [SQLITO].BI_TIPO_INMUEBLE 
-SELECT COUNT(*) FROM [SQLITO].estado_alquiler
-SELECT COUNT(*) FROM [SQLITO].barrio 
-SELECT COUNT(*) FROM [SQLITO].Localidad 
-SELECT COUNT(*) FROM [SQLITO].Provincia 
-SELECT COUNT(*) FROM [SQLITO].BI_UBICACION  
-SELECT COUNT(*) FROM [SQLITO].pago_alquiler
+select count(*) from[SQLITO].anuncio
+select count(*) from[SQLITO].Inmueble
+select count(*) from[SQLITO].agente_inmobiliario
+select count(*) from[SQLITO].agencia
+select count(*) from[SQLITO].moneda
+select count(*) from[SQLITO].tipo_inmueble
+select count(*) from[SQLITO].barrio
+select count(*) from[SQLITO].Localidad
+select count(*) from[SQLITO].Provincia
+select count(*) from[SQLITO].BI_ubicacion
+select count(*) from[SQLITO].venta
+select count(*) from[SQLITO].alquiler
+select count(*) from[SQLITO].Inquilino
+select count(*) from[SQLITO].pago_alquiler
+select count(*) from[SQLITO].estado_alquiler
+select count(*) from[SQLITO].Comprador
 
 -- Vistass
 
-GO
-CREATE VIEW [SQLITO].VW_DURACION_PROMEDIO_ANUNCIOS 
-AS
-SELECT
-    t.BI_TIEMPO_ANIO AS Anio,
-    t.BI_TIEMPO_CUATRIMESTRE AS Cuatrimestre,
-    ubi.BI_barrio AS Barrio,
-    amb.BI_AMBIENTES_CANTIDAD AS ambientes,
-    tipo.BI_TIPO_OPERACION_DESCRIPCION AS tipoOperacion,
-    SUM(a.BI_tiempo * a.BI_cantidad_de_anuncios) / sum(a.BI_cantidad_de_anuncios) AS DuracionPromedio
-FROM [SQLITO].BI_HECHOS_ANUNCIO a
-    JOIN [SQLITO].BI_TIEMPO t ON t.BI_TIEMPO_ID = a.BI_tiempo
-    JOIN [SQLITO].BI_TIPO_OPERACION tipo ON tipo.BI_TIPO_OPERACION_ID = a.BI_tipo_operacion
-    JOIN [SQLITO].BI_UBICACION ubi on ubi.BI_UBICACION_ID = A.BI_ubicacion
-    JOIN [SQLITO].BI_AMBIENTES amb ON amb.BI_AMBIENTES_ID = a.BI_ambientes
-GROUP BY
-    t.BI_TIEMPO_ANIO,
-    t.BI_TIEMPO_CUATRIMESTRE,
-    tipo.BI_TIPO_OPERACION_DESCRIPCION,
-    ubi.BI_BARRIO,
-    amb.BI_AMBIENTES_CANTIDAD;
-GO
-
-
-
-
-
---VISTA 2
-GO
-CREATE VIEW [SQLITO].VW_PROMEDIO_PRECIO_INMUEBLES AS
-SELECT 
-    t.BI_TIEMPO_ANIO as anio,
-    t.BI_TIEMPO_CUATRIMESTRE as cuatrimestre,
-    op.BI_TIPO_OPERACION_DESCRIPCION as tipoOperacion,
-    inm.BI_TIPO_INMUEBLE as tipoInmueble,
-    rm.BI_RANGO_METROS_DESCRIPCION,
-	tm.BI_TIPO_MONEDA,
-    SUM(ha.BI_precio_promedio * ha.BI_cantidad_de_anuncios) / SUM(ha.BI_cantidad_de_anuncios) AS Precio_Promedio
-FROM 
-    [SQLITO].BI_HECHOS_ANUNCIO ha
-INNER JOIN 
-    [SQLITO].BI_TIEMPO t ON ha.BI_tiempo = t.BI_TIEMPO_ID
-INNER JOIN 
-    [SQLITO].BI_TIPO_OPERACION op ON ha.BI_tipo_operacion = op.BI_TIPO_OPERACION_ID
-INNER JOIN 
-    [SQLITO].BI_TIPO_INMUEBLE inm ON ha.BI_tipo_inmueble = inm.BI_TIPO_INMUEBLE_ID
-INNER JOIN 
-    [SQLITO].BI_RANGO_METROS rm ON ha.BI_rango_metros = rm.BI_RANGO_METROS_ID
-INNER JOIN 
-    [SQLITO].BI_TIPO_MONEDA tm ON ha.BI_tipo_moneda = tm.BI_TIPO_MONEDA_ID
-GROUP BY 
-    t.BI_TIEMPO_ANIO,
-    t.BI_TIEMPO_CUATRIMESTRE,
-    op.BI_TIPO_OPERACION_DESCRIPCION,
-    inm.BI_TIPO_INMUEBLE,
-    rm.BI_RANGO_METROS_DESCRIPCION,
-    tm.BI_TIPO_MONEDA;
-GO
-
---VISTA 3
-GO
-
-CREATE VIEW [SQLITO].[BI_VW_TOP_BARRIOS_POR_RANGO_ETARIO]
-AS
-SELECT TOP(5)
-	
-    t.BI_TIEMPO_ANIO as anio,
-	t.BI_TIEMPO_CUATRIMESTRE as cuatrimestre,
-    u.BI_BARRIO as barrio,
-    COUNT(*) AS [CantidadAlquileres]
-FROM
-    [SQLITO].BI_HECHOS_ALQUILER a
-INNER JOIN [SQLITO].BI_TIEMPO t ON a.BI_tiempo = t.BI_TIEMPO_ID
-INNER JOIN [SQLITO].BI_RANGO_ETARIO re ON a.BI_rango_etario_inquilino = re.BI_RANGO_ETARIO_ID
-INNER JOIN [SQLITO].BI_UBICACION u ON a.BI_ubicacion = u.BI_UBICACION_ID
-GROUP BY
-	t.BI_TIEMPO_ANIO,
-	t.BI_TIEMPO_CUATRIMESTRE,
-	--A CHEQUEAR----------------------------------------------------------------------------
-    [SQLITO].[CALCULAR_RANGO_ETARIO_INQUILINO](re.BI_RANGO_ETARIO_RANGO),
-	u.BI_BARRIO
-	--[SQLITO].[CALCULAR_RANGO_ETARIO_INQUILINO]([inquilino].[inquilino_id]);
-ORDER BY
-	CantidadAlquileres DESC
-GO
-
---VISTA 4
-GO
-CREATE VIEW [SQLITO].VW_PORCENTAJE_INCUMPLIMIENTO_ALQUILER AS
-SELECT
-    T.BI_TIEMPO_ANIO AS Anio,
-    T.BI_TIEMPO_CUATRIMESTRE AS Cuatrimestre,
-    T.BI_TIEMPO_MES AS Mes,
-    SUM( A.BI_porcentaje_incumplimiento_pagos + A.BI_cantidad_de_pagos) / SUM(A.BI_cantidad_de_pagos) AS PorcentajeIncumplimiento
-FROM [SQLITO].BI_HECHOS_ALQUILER A
-    JOIN [SQLITO].BI_TIEMPO T ON T.BI_TIEMPO_ID = A.BI_tiempo
-GROUP BY
-    T.BI_TIEMPO_ANIO,
-    t.BI_TIEMPO_CUATRIMESTRE,
-    T.BI_TIEMPO_MES;
-GO
-
---Vista 5
-
-GO
-CREATE VIEW [SQLITO].VW_PROMEDIO_INCREMENTO_ALQUILER AS
-SELECT
-    t.BI_TIEMPO_ANIO as Anio,
-    t.BI_TIEMPO_CUATRIMESTRE as Cuatrimestre,
-    t.BI_TIEMPO_MES as Mes,
-    SUM(a.BI_promedio_aumento * a.BI_cantidad_de_pagos) / SUM(a.BI_cantidad_de_pagos) as porcentajePromedioIncrementoAlquileres
-    
-FROM [SQLITO].BI_hecho_pago_alquiler a
-    JOIN [SQLITO].BI_TIEMPO t ON t.bi_tiempo = a.bi_tiempo
-GROUP BY
-    t.BI_TIEMPO_ANIO,
-    t.BI_TIEMPO_CUATRIMESTRE,
-    t.BI_TIEMPO_MES;
-GO
-
---Vista 6
-GO
-CREATE VIEW [SQLITO].VW_PRECIO_PROMEDIO_M2_VENTAS AS
-SELECT
-    tInm.BI_TIPO_INMUEBLE AS TipoInmueble,
-    u.BI_LOCALIDAD AS Localidad,
-    t.BI_TIEMPO_ANIO AS Anio,
-    t.BI_TIEMPO_CUATRIMESTRE AS Cuatrimestre,
-	m.BI_TIPO_MONEDA,
-    SUM(v.BI_precio_promedio_X_metro_cuadrado * v.BI_cantidad_de_ventas)/Sum(v.BI_cantidad_de_ventas) AS PrecioPromedioM2
-FROM [SQLITO].BI_HECHOS_VENTA v
-JOIN [SQLITO].BI_TIPO_INMUEBLE tInm ON v.BI_tipo_inmueble = tInm.BI_TIPO_INMUEBLE_ID
-JOIN [SQLITO].BI_UBICACION u ON v.BI_ubicacion = u.BI_UBICACION_ID
-JOIN [SQLITO].BI_TIEMPO t ON v.BI_tiempo = t.BI_TIEMPO_ID
-JOIN [SQLITO].BI_TIPO_MONEDA m ON v.BI_tipo_moneda = m.BI_TIPO_MONEDA_ID
-GROUP BY
-    tInm.BI_TIPO_INMUEBLE,
-    u.BI_LOCALIDAD,
-    t.BI_TIEMPO_ANIO,
-    t.BI_TIEMPO_CUATRIMESTRE,
-	m.BI_TIPO_MONEDA
-GO
-
---Vista 7
-
-GO
-CREATE VIEW [SQLITO].VW_PROMEDIO_COMISION_TIPO_OPERACION AS
-SELECT
-    t.BI_TIEMPO_ANIO as anio,
-    t.BI_TIEMPO_CUATRIMESTRE as Cuatrimestre,
-    op.BI_TIPO_OPERACION_DESCRIPCION as tipoOperacion,
-    ag.BI_AGENCIA_NOMBRE as agencia,
-    SUM(AN.BI_promedio_comision * AN.BI_cantidad_de_anuncios) / SUM(AN.BI_cantidad_de_anuncios) as valorPromedioComision
-FROM [SQLITO].BI_HECHOS_ANUNCIO an
-    JOIN [SQLITO].bi_tiempo t on t.BI_TIEMPO_ID = an.bi_tiempo
-    JOIN [SQLITO].BI_tipo_operacion op on a.BI_tipo_operacion = op.BI_TIPO_OPERACION_ID
-    JOIN [SQLITO].BI_agencia ag on an.BI_AGENCIA = ag.BI_AGENCIA_ID
-GROUP BY  
-    t.BI_TIEMPO_CUATRIMESTRE, 
-    t.BI_TIEMPO_ANIO,
-    op.BI_TIPO_OPERACION_DESCRIPCION, 
-    ag.BI_AGENCIA_NOMBRE;
-GO
-
-
-
-
---Vista 8
-
-GO
-CREATE VIEW [SQLITO].VW_PORCENTAJE_OPERACIONES_CONCRETADAS 
-AS
-SELECT
-        t.BI_TIEMPO_ANIO as anio,
-        t.BI_TIEMPO_CUATRIMESTRE,
-        agen.BI_AGENCIA_NOMBRE as sucursal,
-        --
-        r.BI_rango_etario_empleado -- MMMMM
-        --
-        SUM( a.BI_cantidad_de_operaciones_concretadas ) / SUM( a.BI_cantidad_de_anuncios ) as porcentajeOperacionesConcretadas
-    FROM
-        [SQLITO].BI_HECHOS_ANUNCIO a
-    JOIN [SQLITO].BI_tiempo t on t.BI_TIEMPO_ID = a.bi_tiempo
-    JOIN [SQLITO].BI_agencia agen on agen.BI_AGENCIA_ID = a.BI_agencia
-    JOIN [SQLITO].BI_RANGO_ETARIO r on r.BI_RANGO_ETARIO_ID = a.BI_rango_etario_empleado
-    GROUP BY
-        t.BI_TIEMPO_ANIO, 
-        t.BI_TIEMPO_CUATRIMESTRE,
-        agen.BI_AGENCIA_NOMBRE,
-        r.BI_rango_etario_empleado
-GO
-
-
---Vista 9
-GO
-CREATE VIEW [SQLITO].VW_TOTAL_CIERRE_CONTRATOS AS
-SELECT
-    a.BI_AGENCIA_ID ,
-    t.BI_TIEMPO_ANIO AS Anio,
-    t.BI_TIEMPO_CUATRIMESTRE AS Cuatrimestre,
-	tm.BI_TIPO_MONEDA AS Moneda,
-	tope.BI_TIPO_OPERACION_DESCRIPCION as Operacion,
-	SUM(v.BI_monto_total) as TotalCierreContratos
-FROM [SQLITO].BI_HECHOS_ANUNCIO v
-JOIN [SQLITO].BI_AGENCIA a ON v.BI_agencia = a.BI_AGENCIA_ID
-JOIN [SQLITO].BI_TIPO_MONEDA tm ON v.BI_tipo_moneda = tm.BI_TIPO_MONEDA
-JOIN [SQLITO].BI_TIEMPO t ON v.BI_tiempo = t.BI_TIEMPO_ID
-JOIN [SQLITO].BI_TIPO_OPERACION tope ON v.BI_tipo_operacion = tope.BI_TIPO_OPERACION_ID
-WHERE
-	v.BI_tiempo IS NOT NULL
-GROUP BY
-    a.BI_AGENCIA_ID,
-    tope.BI_TIPO_OPERACION_DESCRIPCION,
-    t.BI_TIEMPO_ANIO,
-    t.BI_TIEMPO_CUATRIMESTRE,
-	tm.BI_TIPO_MONEDA
-GO
+--GO
+--CREATE VIEW [SQLITO].VW_DURACION_PROMEDIO_ANUNCIOS 
+--AS
+--SELECT
+--    t.BI_TIEMPO_ANIO AS Anio,
+--    t.BI_TIEMPO_CUATRIMESTRE AS Cuatrimestre,
+--    ubi.BI_barrio AS Barrio,
+--    amb.BI_AMBIENTES_CANTIDAD AS ambientes,
+--    tipo.BI_TIPO_OPERACION_DESCRIPCION AS tipoOperacion,
+--    SUM(a.BI_tiempo * a.BI_cantidad_de_anuncios) / sum(a.BI_cantidad_de_anuncios) AS DuracionPromedio
+--FROM [SQLITO].BI_HECHOS_ANUNCIO a
+--    JOIN [SQLITO].BI_TIEMPO t ON t.BI_TIEMPO_ID = a.BI_tiempo
+--    JOIN [SQLITO].BI_TIPO_OPERACION tipo ON tipo.BI_TIPO_OPERACION_ID = a.BI_tipo_operacion
+--    JOIN [SQLITO].BI_UBICACION ubi on ubi.BI_UBICACION_ID = A.BI_ubicacion
+--    JOIN [SQLITO].BI_AMBIENTES amb ON amb.BI_AMBIENTES_ID = a.BI_ambientes
+--GROUP BY
+--    t.BI_TIEMPO_ANIO,
+--    t.BI_TIEMPO_CUATRIMESTRE,
+--    tipo.BI_TIPO_OPERACION_DESCRIPCION,
+--    ubi.BI_BARRIO,
+--    amb.BI_AMBIENTES_CANTIDAD;
+--GO
+--
+--
+--
+--
+--
+----VISTA 2
+--GO
+--CREATE VIEW [SQLITO].VW_PROMEDIO_PRECIO_INMUEBLES AS
+--SELECT 
+--    t.BI_TIEMPO_ANIO as anio,
+--    t.BI_TIEMPO_CUATRIMESTRE as cuatrimestre,
+--    op.BI_TIPO_OPERACION_DESCRIPCION as tipoOperacion,
+--    inm.BI_TIPO_INMUEBLE as tipoInmueble,
+--    rm.BI_RANGO_METROS_DESCRIPCION,
+--	tm.BI_TIPO_MONEDA,
+--    SUM(ha.BI_precio_promedio * ha.BI_cantidad_de_anuncios) / SUM(ha.BI_cantidad_de_anuncios) AS Precio_Promedio
+--FROM 
+--    [SQLITO].BI_HECHOS_ANUNCIO ha
+--INNER JOIN 
+--    [SQLITO].BI_TIEMPO t ON ha.BI_tiempo = t.BI_TIEMPO_ID
+--INNER JOIN 
+--    [SQLITO].BI_TIPO_OPERACION op ON ha.BI_tipo_operacion = op.BI_TIPO_OPERACION_ID
+--INNER JOIN 
+--    [SQLITO].BI_TIPO_INMUEBLE inm ON ha.BI_tipo_inmueble = inm.BI_TIPO_INMUEBLE_ID
+--INNER JOIN 
+--    [SQLITO].BI_RANGO_METROS rm ON ha.BI_rango_metros = rm.BI_RANGO_METROS_ID
+--INNER JOIN 
+--    [SQLITO].BI_TIPO_MONEDA tm ON ha.BI_tipo_moneda = tm.BI_TIPO_MONEDA_ID
+--GROUP BY 
+--    t.BI_TIEMPO_ANIO,
+--    t.BI_TIEMPO_CUATRIMESTRE,
+--    op.BI_TIPO_OPERACION_DESCRIPCION,
+--    inm.BI_TIPO_INMUEBLE,
+--    rm.BI_RANGO_METROS_DESCRIPCION,
+--    tm.BI_TIPO_MONEDA;
+--GO
+--
+----VISTA 3
+--GO
+--
+--CREATE VIEW [SQLITO].[BI_VW_TOP_BARRIOS_POR_RANGO_ETARIO]
+--AS
+--SELECT TOP(5)
+--	
+--    t.BI_TIEMPO_ANIO as anio,
+--	t.BI_TIEMPO_CUATRIMESTRE as cuatrimestre,
+--    u.BI_BARRIO as barrio,
+--    COUNT(*) AS [CantidadAlquileres]
+--FROM
+--    [SQLITO].BI_HECHOS_ALQUILER a
+--INNER JOIN [SQLITO].BI_TIEMPO t ON a.BI_tiempo = t.BI_TIEMPO_ID
+--INNER JOIN [SQLITO].BI_RANGO_ETARIO re ON a.BI_rango_etario_inquilino = re.BI_RANGO_ETARIO_ID
+--INNER JOIN [SQLITO].BI_UBICACION u ON a.BI_ubicacion = u.BI_UBICACION_ID
+--GROUP BY
+--	t.BI_TIEMPO_ANIO,
+--	t.BI_TIEMPO_CUATRIMESTRE,
+--	--A CHEQUEAR----------------------------------------------------------------------------
+--    [SQLITO].[CALCULAR_RANGO_ETARIO_INQUILINO](re.BI_RANGO_ETARIO_RANGO),
+--	u.BI_BARRIO
+--	--[SQLITO].[CALCULAR_RANGO_ETARIO_INQUILINO]([inquilino].[inquilino_id]);
+--ORDER BY
+--	CantidadAlquileres DESC
+--GO
+--
+----VISTA 4
+--GO
+--CREATE VIEW [SQLITO].VW_PORCENTAJE_INCUMPLIMIENTO_ALQUILER AS
+--SELECT
+--    T.BI_TIEMPO_ANIO AS Anio,
+--    T.BI_TIEMPO_CUATRIMESTRE AS Cuatrimestre,
+--    T.BI_TIEMPO_MES AS Mes,
+--    SUM( A.BI_porcentaje_incumplimiento_pagos + A.BI_cantidad_de_pagos) / SUM(A.BI_cantidad_de_pagos) AS PorcentajeIncumplimiento
+--FROM [SQLITO].BI_HECHOS_ALQUILER A
+--    JOIN [SQLITO].BI_TIEMPO T ON T.BI_TIEMPO_ID = A.BI_tiempo
+--GROUP BY
+--    T.BI_TIEMPO_ANIO,
+--    t.BI_TIEMPO_CUATRIMESTRE,
+--    T.BI_TIEMPO_MES;
+--GO
+--
+----Vista 5
+--
+--GO
+--CREATE VIEW [SQLITO].VW_PROMEDIO_INCREMENTO_ALQUILER AS
+--SELECT
+--    t.BI_TIEMPO_ANIO as Anio,
+--    t.BI_TIEMPO_CUATRIMESTRE as Cuatrimestre,
+--    t.BI_TIEMPO_MES as Mes,
+--    SUM(a.BI_promedio_aumento * a.BI_cantidad_de_pagos) / SUM(a.BI_cantidad_de_pagos) as porcentajePromedioIncrementoAlquileres
+--    
+--FROM [SQLITO].BI_HECHOS_PAGO_ALQUILER a
+--    JOIN [SQLITO].BI_TIEMPO t ON t.BI_TIEMPO_ID = a.bi_tiempo
+--GROUP BY
+--    t.BI_TIEMPO_ANIO,
+--    t.BI_TIEMPO_CUATRIMESTRE,
+--    t.BI_TIEMPO_MES;
+--GO
+--
+----Vista 6
+--GO
+--CREATE VIEW [SQLITO].VW_PRECIO_PROMEDIO_M2_VENTAS AS
+--SELECT
+--    tInm.BI_TIPO_INMUEBLE AS TipoInmueble,
+--    u.BI_LOCALIDAD AS Localidad,
+--    t.BI_TIEMPO_ANIO AS Anio,
+--    t.BI_TIEMPO_CUATRIMESTRE AS Cuatrimestre,
+--	m.BI_TIPO_MONEDA,
+--    SUM(v.BI_precio_promedio_X_metro_cuadrado * v.BI_cantidad_de_ventas)/Sum(v.BI_cantidad_de_ventas) AS PrecioPromedioM2
+--FROM [SQLITO].BI_HECHOS_VENTA v
+--JOIN [SQLITO].BI_TIPO_INMUEBLE tInm ON v.BI_tipo_inmueble = tInm.BI_TIPO_INMUEBLE_ID
+--JOIN [SQLITO].BI_UBICACION u ON v.BI_ubicacion = u.BI_UBICACION_ID
+--JOIN [SQLITO].BI_TIEMPO t ON v.BI_tiempo = t.BI_TIEMPO_ID
+--JOIN [SQLITO].BI_TIPO_MONEDA m ON v.BI_tipo_moneda = m.BI_TIPO_MONEDA_ID
+--GROUP BY
+--    tInm.BI_TIPO_INMUEBLE,
+--    u.BI_LOCALIDAD,
+--    t.BI_TIEMPO_ANIO,
+--    t.BI_TIEMPO_CUATRIMESTRE,
+--	m.BI_TIPO_MONEDA
+--GO
+--
+----Vista 7
+--
+--GO
+--CREATE VIEW [SQLITO].VW_PROMEDIO_COMISION_TIPO_OPERACION AS
+--SELECT
+--    t.BI_TIEMPO_ANIO as anio,
+--    t.BI_TIEMPO_CUATRIMESTRE as Cuatrimestre,
+--    op.BI_TIPO_OPERACION_DESCRIPCION as tipoOperacion,
+--    ag.BI_AGENCIA_NOMBRE as agencia,
+--    SUM(AN.BI_promedio_comision * AN.BI_cantidad_de_anuncios) / SUM(AN.BI_cantidad_de_anuncios) as valorPromedioComision
+--FROM [SQLITO].BI_HECHOS_ANUNCIO an
+--    JOIN [SQLITO].bi_tiempo t on t.BI_TIEMPO_ID = an.bi_tiempo
+--    JOIN [SQLITO].BI_tipo_operacion op on an.BI_tipo_operacion = op.BI_TIPO_OPERACION_ID
+--    JOIN [SQLITO].BI_agencia ag on an.BI_AGENCIA = ag.BI_AGENCIA_ID
+--GROUP BY  
+--    t.BI_TIEMPO_CUATRIMESTRE, 
+--    t.BI_TIEMPO_ANIO,
+--    op.BI_TIPO_OPERACION_DESCRIPCION, 
+--    ag.BI_AGENCIA_NOMBRE;
+--GO
+--
+--
+--
+--
+----Vista 8
+--
+--GO
+--CREATE VIEW [SQLITO].VW_PORCENTAJE_OPERACIONES_CONCRETADAS 
+--AS
+--SELECT
+--        t.BI_TIEMPO_ANIO as anio,
+--        t.BI_TIEMPO_CUATRIMESTRE,
+--        agen.BI_AGENCIA_NOMBRE as sucursal,
+--        --
+--        r.BI_RANGO_ETARIO_RANGO, -- MMMMM
+--        --
+--        SUM( a.BI_cantidad_de_operaciones_concretadas ) / SUM( a.BI_cantidad_de_anuncios ) as porcentajeOperacionesConcretadas
+--    FROM
+--        [SQLITO].BI_HECHOS_ANUNCIO a
+--    JOIN [SQLITO].BI_tiempo t on t.BI_TIEMPO_ID = a.bi_tiempo
+--    JOIN [SQLITO].BI_agencia agen on agen.BI_AGENCIA_ID = a.BI_agencia
+--    JOIN [SQLITO].BI_RANGO_ETARIO r on r.BI_RANGO_ETARIO_ID = a.BI_rango_etario_empleado
+--    GROUP BY
+--        t.BI_TIEMPO_ANIO, 
+--        t.BI_TIEMPO_CUATRIMESTRE,
+--        agen.BI_AGENCIA_NOMBRE,
+--        r.BI_RANGO_ETARIO_RANGO
+--GO
+--
+--
+----Vista 9
+--GO
+--CREATE VIEW [SQLITO].VW_TOTAL_CIERRE_CONTRATOS AS
+--SELECT
+--    a.BI_AGENCIA_ID ,
+--    t.BI_TIEMPO_ANIO AS Anio,
+--    t.BI_TIEMPO_CUATRIMESTRE AS Cuatrimestre,
+--	tm.BI_TIPO_MONEDA AS Moneda,
+--	tope.BI_TIPO_OPERACION_DESCRIPCION as Operacion,
+--	SUM(v.BI_monto_total) as TotalCierreContratos
+--FROM [SQLITO].BI_HECHOS_ANUNCIO v
+--JOIN [SQLITO].BI_AGENCIA a ON v.BI_agencia = a.BI_AGENCIA_ID
+--JOIN [SQLITO].BI_TIPO_MONEDA tm ON v.BI_tipo_moneda = tm.BI_TIPO_MONEDA
+--JOIN [SQLITO].BI_TIEMPO t ON v.BI_tiempo = t.BI_TIEMPO_ID
+--JOIN [SQLITO].BI_TIPO_OPERACION tope ON v.BI_tipo_operacion = tope.BI_TIPO_OPERACION_ID
+--WHERE
+--	v.BI_tiempo IS NOT NULL
+--GROUP BY
+--    a.BI_AGENCIA_ID,
+--    tope.BI_TIPO_OPERACION_DESCRIPCION,
+--    t.BI_TIEMPO_ANIO,
+--    t.BI_TIEMPO_CUATRIMESTRE,
+--	tm.BI_TIPO_MONEDA
+--GO
